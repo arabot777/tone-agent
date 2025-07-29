@@ -1,0 +1,16 @@
+{
+  "Requirement_Analyst": "需求分析师",
+  "Data_Validator": "数据验证者",
+  "Data_Arbiter": "数据层仲裁者",
+  "Ambiguity_Negotiator": "歧义协商者",
+  "Quality_Guardian": "质量守门人",
+  "Four_Causes_Tracer": "四因追溯者",
+  "Integration_Architect": "整合架构师",
+  "Dialectic_Engine": "辩证矛盾引擎",
+  "Cognitive_Sentinel": "认知免疫哨兵",
+  "Ethical_Arbiter": "伦理层仲裁者",
+  "Report_Generator": "报告生成师",
+  "Fact_Checker": "事实核查官",
+  "fetch_webpage": "网页获取",
+  "google_search": "谷歌搜索"
+}

@@ -1,0 +1,4828 @@
+definitions:
+  agimat.Agent:
+    properties:
+      agents:
+        items:
+          $ref: '#/definitions/agimat.Agent'
+        type: array
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      extra:
+        additionalProperties: true
+        type: object
+      id:
+        type: string
+      llm_config: {}
+      name:
+        type: string
+      prompt:
+        type: string
+      status:
+        type: string
+      template:
+        type: string
+      tools: {}
+      updated_at:
+        type: string
+      updated_by:
+        type: integer
+    type: object
+  agimat.AgentListData:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/agimat.Agent'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  agimat.AgentListResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/agimat.AgentListData'
+      message:
+        type: string
+    type: object
+  agimat.ListAgentsRequest:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+    type: object
+  bo.AccessibleResourceTreeNode:
+    properties:
+      agents:
+        description: 挂载的智能体列表
+        items:
+          $ref: '#/definitions/bo.AgentBO'
+        type: array
+      canCreate:
+        description: 是否有创建权限
+        type: boolean
+      canDelete:
+        description: 是否有删除权限
+        type: boolean
+      canEdit:
+        description: 是否有编辑权限
+        type: boolean
+      canView:
+        description: 权限信息
+        type: boolean
+      children:
+        items:
+          $ref: '#/definitions/bo.AccessibleResourceTreeNode'
+        type: array
+      description:
+        type: string
+      id:
+        type: integer
+      knowledges:
+        description: 挂载的资源
+        items:
+          $ref: '#/definitions/bo.KnowledgeBO'
+        type: array
+      level:
+        type: integer
+      name:
+        type: string
+      organizationId:
+        type: integer
+      parentId:
+        type: integer
+      path:
+        type: string
+      permissionNames:
+        description: 权限名称列表
+        items:
+          type: string
+        type: array
+      permissionSources:
+        description: 权限来源列表
+        items:
+          $ref: '#/definitions/bo.PermissionSource'
+        type: array
+    type: object
+  bo.AgentBO:
+    properties:
+      agentId:
+        description: evegen 智能体id，如果要直接和evegen交互使用这个id
+        type: string
+      agentType:
+        allOf:
+        - $ref: '#/definitions/enum.AgentType'
+        description: '智能体类型， chat: 聊天、workflow: 工作流、autonomous_decision: 自主决策'
+      canDelete:
+        description: 是否可删除
+        type: boolean
+      canEdit:
+        description: 是否可编辑
+        type: boolean
+      canView:
+        description: 权限相关字段 - 新版权限系统
+        type: boolean
+      cover:
+        description: 智能体封面
+        type: string
+      createTime:
+        description: 创建时间
+        type: string
+      createdBy:
+        description: 创建者
+        type: string
+      description:
+        description: 智能体描述
+        type: string
+      id:
+        description: 智能体id
+        type: integer
+      isCloned:
+        description: 克隆相关字段
+        type: boolean
+      kbIds:
+        description: 知识库id列表, 目前仅对聊天智能体有效
+        items:
+          type: string
+        type: array
+      kbNames:
+        description: 知识库名称列表, 目前仅对聊天智能体有效
+        items:
+          type: string
+        type: array
+      name:
+        description: 智能体名称
+        type: string
+      organizationId:
+        description: 组织id
+        type: integer
+      permissionNames:
+        description: 权限名称列表
+        items:
+          type: string
+        type: array
+      permissionSources:
+        description: 权限来源详情
+        items:
+          $ref: '#/definitions/bo.PermissionSource'
+        type: array
+      resourceTreeId:
+        description: 绑定的资源树节点ID
+        type: integer
+      resourceTreePath:
+        description: 绑定的资源树节点路径
+        type: string
+      spaceType:
+        allOf:
+        - $ref: '#/definitions/enum.SpaceType'
+        description: 当前智能体属于个人还是组织空间：personal个人空间、org组织空间
+      status:
+        allOf:
+        - $ref: '#/definitions/enum.DataValidStatus'
+        description: 状态， 默认都是enabled
+      updateTime:
+        description: 更新时间
+        type: string
+      workflowBeginQueryFields:
+        description: 智能体工作流配置中的六种字段类型
+        items:
+          $ref: '#/definitions/bo.WorkflowParsedField'
+        type: array
+    type: object
+  bo.AgentCloneRequest:
+    properties:
+      agentId:
+        description: 要克隆的智能体id
+        type: integer
+      description:
+        description: 智能体描述
+        type: string
+      name:
+        description: 智能体名称
+        type: string
+    required:
+    - agentId
+    - name
+    type: object
+  bo.AgentCreateRequest:
+    properties:
+      agentType:
+        $ref: '#/definitions/enum.AgentType'
+      config:
+        type: string
+      cover:
+        description: 智能体封面, base64编码
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      resourceTreeId:
+        description: 绑定的资源树节点ID
+        type: integer
+      spaceType:
+        allOf:
+        - $ref: '#/definitions/enum.SpaceType'
+        description: 空间类型：personal-个人，org-组织
+    required:
+    - name
+    type: object
+  bo.AgentImportRequest:
+    properties:
+      agentType:
+        allOf:
+        - $ref: '#/definitions/enum.AgentType'
+        description: 智能体类型, 当前仅支持单智能体传入：workflow、autonomous_decision
+      description:
+        description: 智能体描述
+        type: string
+      json:
+        additionalProperties: true
+        description: 智能体json
+        type: object
+      spaceType:
+        allOf:
+        - $ref: '#/definitions/enum.SpaceType'
+        description: 智能体空间类型, 当前仅支持单智能体传入 org、tone
+      title:
+        description: 智能体名称
+        type: string
+    required:
+    - agentType
+    - json
+    - spaceType
+    - title
+    type: object
+  bo.AgentUpdateRequest:
+    properties:
+      cover:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      kb_ids:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+    type: object
+  bo.AvailablePermissionsRequest:
+    properties:
+      subjects:
+        description: 被授权方（主体）信息 - 可选，用于更精确的权限判断
+        items:
+          $ref: '#/definitions/bo.PermissionSubject'
+        type: array
+      targets:
+        description: 授权目标信息 - 必须，用于确定可用权限类型
+        items:
+          $ref: '#/definitions/bo.PermissionTarget'
+        minItems: 1
+        type: array
+    required:
+    - targets
+    type: object
+  bo.AvailablePermissionsResponse:
+    properties:
+      allOptions:
+        description: 所有可用权限的平铺列表
+        items:
+          $ref: '#/definitions/bo.PermissionOption'
+        type: array
+      categories:
+        description: 按分类组织的权限选项
+        items:
+          $ref: '#/definitions/bo.PermissionCategory'
+        type: array
+    type: object
+  bo.KnowledgeBO:
+    properties:
+      canDelete:
+        description: 是否可删除
+        type: boolean
+      canEdit:
+        description: 是否可编辑
+        type: boolean
+      canUpload:
+        description: 是否可上传文档
+        type: boolean
+      canView:
+        description: 权限相关字段 - 新版权限系统
+        type: boolean
+      cover:
+        type: string
+      createTime:
+        type: string
+      createdBy:
+        type: string
+      description:
+        type: string
+      documentCount:
+        type: integer
+      id:
+        type: integer
+      kbId:
+        type: string
+      name:
+        type: string
+      organizationId:
+        type: integer
+      permissionNames:
+        description: 权限名称列表
+        items:
+          type: string
+        type: array
+      permissionSources:
+        description: 权限来源详情
+        items:
+          $ref: '#/definitions/bo.PermissionSource'
+        type: array
+      resourceTreeId:
+        type: integer
+      resourceTreePath:
+        type: string
+      size:
+        type: integer
+      spaceType:
+        $ref: '#/definitions/enum.SpaceType'
+      status:
+        $ref: '#/definitions/enum.DataValidStatus'
+      updateTime:
+        type: string
+    type: object
+  bo.KnowledgeCreateRequest:
+    properties:
+      cover:
+        description: 封面, base64
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      resourceTreeId:
+        description: 绑定的资源树节点ID
+        type: integer
+      spaceType:
+        allOf:
+        - $ref: '#/definitions/enum.SpaceType'
+        description: 空间类型：personal-个人，org-组织
+    required:
+    - name
+    type: object
+  bo.KnowledgeUpdateRequest:
+    properties:
+      cover:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  bo.ListUserRequest:
+    properties:
+      ids:
+        items:
+          type: string
+        type: array
+    type: object
+  bo.MountRequest:
+    properties:
+      resourceIds:
+        items:
+          type: integer
+        type: array
+      resourceType:
+        allOf:
+        - $ref: '#/definitions/enum.ResourceType'
+        description: '''agent'' or ''knowledge'''
+      treeNodeId:
+        type: integer
+    required:
+    - resourceIds
+    - resourceType
+    - treeNodeId
+    type: object
+  bo.OrganizationAddUserRequest:
+    properties:
+      isAdmin:
+        type: boolean
+      userId:
+        type: string
+    required:
+    - userId
+    type: object
+  bo.OrganizationCreateRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  bo.OrganizationSimpleBO:
+    properties:
+      isAdmin:
+        type: boolean
+      name:
+        type: string
+      uuid:
+        type: string
+    type: object
+  bo.OrganizationUpdateRequest:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    required:
+    - id
+    type: object
+  bo.PermissionBO:
+    properties:
+      description:
+        description: 授权描述
+        type: string
+      expiryTime:
+        description: 过期时间（Unix时间戳，0表示永不过期）
+        type: integer
+      grantId:
+        description: 授权基本信息
+        type: string
+      grantTitle:
+        description: 授权标题/描述
+        type: string
+      grantedBy:
+        description: 管理信息
+        type: string
+      grantedByName:
+        description: 授权人名称（冗余字段，便于显示）
+        type: string
+      id:
+        type: integer
+    type: object
+  bo.PermissionBatchRevokeRequest:
+    properties:
+      ids:
+        description: 权限授权记录ID列表
+        items:
+          type: integer
+        minItems: 1
+        type: array
+    required:
+    - ids
+    type: object
+  bo.PermissionCategory:
+    properties:
+      category:
+        description: 分类名称
+        type: string
+      description:
+        description: 分类描述
+        type: string
+      name:
+        description: 分类显示名称
+        type: string
+      permissions:
+        description: 该分类下的权限列表
+        items:
+          $ref: '#/definitions/bo.PermissionOption'
+        type: array
+    type: object
+  bo.PermissionDetailBO:
+    properties:
+      createTime:
+        description: 创建时间
+        type: integer
+      description:
+        description: 授权描述
+        type: string
+      expiryTime:
+        description: 过期时间（Unix时间戳，0表示永不过期）
+        type: integer
+      grantId:
+        description: 授权基本信息
+        type: string
+      grantTitle:
+        description: 授权标题/描述
+        type: string
+      grantedBy:
+        description: 管理信息
+        type: string
+      grantedByName:
+        description: 授权人名称
+        type: string
+      id:
+        type: integer
+      permissions:
+        description: 权限类型列表
+        items:
+          $ref: '#/definitions/enum.PermissionType'
+        type: array
+      subjects:
+        description: 原始授权配置（从权限关系中还原）
+        items:
+          $ref: '#/definitions/bo.PermissionSubject'
+        type: array
+      targets:
+        description: 授权目标列表
+        items:
+          $ref: '#/definitions/bo.PermissionTarget'
+        type: array
+      updateTime:
+        description: 更新时间
+        type: integer
+    type: object
+  bo.PermissionGrantRequest:
+    properties:
+      description:
+        description: 可选信息
+        type: string
+      expiryTime:
+        description: 过期时间（Unix时间戳，0表示永不过期）
+        type: integer
+      grantTitle:
+        description: 授权标题/描述（可选，不传则自动生成）
+        type: string
+      permissions:
+        description: 权限信息 - 支持多种权限的组合授权
+        items:
+          $ref: '#/definitions/enum.PermissionType'
+        minItems: 1
+        type: array
+      subjects:
+        description: 被授权方（主体）信息（支持批量）
+        items:
+          $ref: '#/definitions/bo.PermissionSubject'
+        minItems: 1
+        type: array
+      targets:
+        description: 授权目标信息（支持批量）
+        items:
+          $ref: '#/definitions/bo.PermissionTarget'
+        minItems: 1
+        type: array
+    required:
+    - permissions
+    - subjects
+    - targets
+    type: object
+  bo.PermissionOption:
+    properties:
+      category:
+        description: 权限分类：knowledge, agent, create
+        type: string
+      description:
+        description: 权限描述
+        type: string
+      key:
+        allOf:
+        - $ref: '#/definitions/enum.PermissionType'
+        description: 权限类型值
+      name:
+        description: 权限显示名称
+        type: string
+    type: object
+  bo.PermissionRevokeRequest:
+    properties:
+      id:
+        type: integer
+    required:
+    - id
+    type: object
+  bo.PermissionSource:
+    properties:
+      grantId:
+        description: 授权记录ID
+        type: string
+      permissions:
+        allOf:
+        - $ref: '#/definitions/enum.PermissionType'
+        description: 该来源提供的权限
+      sourceId:
+        description: 权限来源ID（用户ID或用户组ID）
+        type: string
+      sourceName:
+        description: 权限来源名称
+        type: string
+      sourceType:
+        description: 权限来源类型：direct(直接权限), inherited(继承权限)
+        type: string
+      subjectType:
+        description: 主体类型：user, group
+        type: string
+      treeNodeId:
+        description: 如果是继承权限，来源节点ID
+        type: integer
+      treeNodeName:
+        description: 如果是继承权限，来源节点名称
+        type: string
+    type: object
+  bo.PermissionSubject:
+    properties:
+      subjectId:
+        description: 用户ID或用户组ID
+        type: string
+      subjectType:
+        allOf:
+        - $ref: '#/definitions/enum.PermissionSubjectType'
+        description: 主体类型
+    required:
+    - subjectId
+    - subjectType
+    type: object
+  bo.PermissionTarget:
+    properties:
+      targetId:
+        description: 资源ID或节点ID
+        type: integer
+      targetType:
+        allOf:
+        - $ref: '#/definitions/enum.PermissionTargetType'
+        description: 目标类型
+    required:
+    - targetId
+    - targetType
+    type: object
+  bo.PermissionUpdateRequest:
+    properties:
+      description:
+        description: 授权描述
+        type: string
+      expiryTime:
+        description: 过期时间（Unix时间戳，0表示永不过期）
+        type: integer
+      grantTitle:
+        description: 可选信息
+        type: string
+      id:
+        description: 权限ID
+        type: integer
+      permissions:
+        description: 权限信息 - 支持多种权限的组合授权 - 完全替换原有权限
+        items:
+          $ref: '#/definitions/enum.PermissionType'
+        minItems: 1
+        type: array
+      subjects:
+        description: 被授权方（主体）信息（支持批量）- 完全替换原有主体
+        items:
+          $ref: '#/definitions/bo.PermissionSubject'
+        minItems: 1
+        type: array
+      targets:
+        description: 授权目标信息（支持批量）- 完全替换原有目标
+        items:
+          $ref: '#/definitions/bo.PermissionTarget'
+        minItems: 1
+        type: array
+    required:
+    - id
+    - permissions
+    - subjects
+    - targets
+    type: object
+  bo.ResourcePermissionCheckRequest:
+    properties:
+      permissionType:
+        $ref: '#/definitions/enum.PermissionType'
+      targetId:
+        description: 资源ID或节点ID
+        type: integer
+      targetType:
+        $ref: '#/definitions/enum.PermissionTargetType'
+    required:
+    - permissionType
+    - targetId
+    - targetType
+    type: object
+  bo.ResourcePermissionCheckResponse:
+    properties:
+      hasPermission:
+        type: boolean
+    type: object
+  bo.ResourceTreeDataResponse:
+    properties:
+      agents:
+        description: 智能体列表
+        items:
+          $ref: '#/definitions/bo.AgentBO'
+        type: array
+      knowledges:
+        description: 知识库列表
+        items:
+          $ref: '#/definitions/bo.KnowledgeBO'
+        type: array
+      page:
+        description: 当前页码
+        type: integer
+      pageSize:
+        description: 每页大小
+        type: integer
+      total:
+        description: 总数量
+        type: integer
+      treeNodeId:
+        description: 资源树节点ID
+        type: integer
+      treeNodeName:
+        description: 资源树节点名称
+        type: string
+      treeNodePath:
+        description: 资源树节点路径
+        type: string
+    type: object
+  bo.ResourceTreeNode:
+    properties:
+      children:
+        description: Permissions    []*PermissionBO    `json:"permissions,omitempty"`
+        items:
+          $ref: '#/definitions/bo.ResourceTreeNode'
+        type: array
+      description:
+        type: string
+      id:
+        type: integer
+      level:
+        type: integer
+      name:
+        type: string
+      organizationId:
+        type: integer
+      parentId:
+        type: integer
+      path:
+        type: string
+    type: object
+  bo.ResourceTreeNodeCreateRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: integer
+    required:
+    - name
+    type: object
+  bo.ResourceTreeNodeUpdateRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  bo.UnmountRequest:
+    properties:
+      resourceId:
+        type: integer
+      resourceType:
+        allOf:
+        - $ref: '#/definitions/enum.ResourceType'
+        description: '''agent'' or ''knowledge'''
+    required:
+    - resourceId
+    - resourceType
+    type: object
+  bo.UserAuthBO:
+    properties:
+      avatar:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      isAdmin:
+        type: boolean
+      lastLoginTime:
+        type: string
+      passwordUpdated:
+        type: boolean
+      username:
+        type: string
+    type: object
+  bo.UserCreateRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  bo.UserGroupBO:
+    properties:
+      createTime:
+        type: string
+      creatorId:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      level:
+        description: 用户组层级
+        type: integer
+      name:
+        type: string
+      organizationId:
+        type: integer
+      parentId:
+        description: 父用户组ID
+        type: integer
+      path:
+        description: 用户组层级路径
+        type: string
+      updateTime:
+        type: string
+    type: object
+  bo.UserGroupCreateRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      parentId:
+        description: 父用户组ID，如果为0则表示没有父组
+        type: integer
+    required:
+    - name
+    type: object
+  bo.UserGroupTreeNode:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/bo.UserGroupTreeNode'
+        type: array
+      description:
+        type: string
+      id:
+        type: integer
+      level:
+        type: integer
+      name:
+        type: string
+      organizationId:
+        type: integer
+      parentId:
+        type: integer
+      path:
+        type: string
+    type: object
+  bo.UserGroupUpdateRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  bo.UserLoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  bo.UserLoginResponse:
+    properties:
+      organizations:
+        items:
+          $ref: '#/definitions/bo.OrganizationSimpleBO'
+        type: array
+      passwordUpdated:
+        type: boolean
+      token:
+        type: string
+      userId:
+        type: string
+      username:
+        type: string
+    type: object
+  bo.UserSettingRequest:
+    properties:
+      new_password:
+        type: string
+      password:
+        type: string
+    type: object
+  bo.UserToGroupRequest:
+    properties:
+      groupId:
+        type: integer
+      userIds:
+        items:
+          type: string
+        type: array
+    required:
+    - groupId
+    - userIds
+    type: object
+  bo.WorkflowParsedField:
+    properties:
+      accepted_types:
+        description: file字段特有属性
+        items:
+          type: string
+        type: array
+      default_bool_value:
+        description: boolean字段特有属性
+        type: boolean
+      default_int_value:
+        type: integer
+      default_value:
+        type: string
+      description:
+        type: string
+      false_label:
+        type: string
+      index:
+        type: integer
+      key:
+        type: string
+      max_length:
+        type: integer
+      max_size_mb:
+        type: integer
+      max_value:
+        type: integer
+      min_length:
+        type: integer
+      min_value:
+        description: integer字段特有属性
+        type: integer
+      multiple:
+        type: boolean
+      multiple_files:
+        type: boolean
+      name:
+        type: string
+      optional:
+        type: boolean
+      options:
+        description: options字段特有属性
+        items:
+          type: string
+        type: array
+      pattern:
+        description: line字段特有属性
+        type: string
+      placeholder:
+        description: paragraph字段特有属性
+        type: string
+      rows:
+        type: integer
+      step:
+        type: integer
+      true_label:
+        type: string
+      type:
+        type: string
+      validation_rules:
+        items:
+          $ref: '#/definitions/bo.WorkflowValidationRule'
+        type: array
+    type: object
+  bo.WorkflowValidationRule:
+    properties:
+      message:
+        type: string
+      type:
+        type: string
+      value: {}
+    type: object
+  client.DocumentInfoRequest:
+    properties:
+      doc_ids:
+        items:
+          type: string
+        type: array
+    type: object
+  enum.AgentType:
+    enum:
+    - chat
+    - workflow
+    - autonomous_decision
+    - am_agent
+    type: string
+    x-enum-comments:
+      AgentTypeAMAgent: AGIMAT Agent
+    x-enum-varnames:
+    - AgentTypeChat
+    - AgentTypeWorkflow
+    - AgentTypeAutonomousDecision
+    - AgentTypeAMAgent
+  enum.DataValidStatus:
+    enum:
+    - enabled
+    - disabled
+    - deleted
+    type: string
+    x-enum-varnames:
+    - Enabled
+    - Disabled
+    - Deleted
+  enum.PermissionSubjectType:
+    enum:
+    - user
+    - group
+    - organization
+    type: string
+    x-enum-varnames:
+    - PermissionSubjectTypeUser
+    - PermissionSubjectTypeGroup
+    - PermissionSubjectTypeOrganization
+  enum.PermissionTargetType:
+    enum:
+    - knowledge
+    - agent
+    - tree_node
+    type: string
+    x-enum-varnames:
+    - PermissionTargetTypeKnowledge
+    - PermissionTargetTypeAgent
+    - PermissionTargetTypeTreeNode
+  enum.PermissionType:
+    enum:
+    - 1
+    - 2
+    - 4
+    - 8
+    - 16
+    - 32
+    - 64
+    - 128
+    - 256
+    - 1
+    - 11
+    - 15
+    - 31
+    - 32
+    - 96
+    - 224
+    - 480
+    type: integer
+    x-enum-comments:
+      PermissionAgentAdmin: 智能体管理
+      PermissionAgentAll: 智能体全部权限
+      PermissionAgentReadOnly: 智能体只读
+      PermissionAgentReadWrite: 智能体读写
+      PermissionKnowledgeAdmin: 知识库管理
+      PermissionKnowledgeAll: 知识库全部权限
+      PermissionKnowledgeReadOnly: 知识库只读
+      PermissionKnowledgeReadWrite: 知识库读写
+      PermissionTypeAgentCreate: 创建智能体 (256) - 只对tree_node有效
+      PermissionTypeAgentDelete: 删除智能体 (128)
+      PermissionTypeAgentEdit: 编辑智能体 (64)
+      PermissionTypeAgentView: 查看智能体 (32)
+      PermissionTypeKnowledgeCreate: 创建知识库 (16) - 只对tree_node有效
+      PermissionTypeKnowledgeDelete: 删除知识库 (4)
+      PermissionTypeKnowledgeEdit: 编辑知识库 (2)
+      PermissionTypeKnowledgeUpload: 上传文档 (8)
+      PermissionTypeKnowledgeView: 查看知识库 (1)
+    x-enum-varnames:
+    - PermissionTypeKnowledgeView
+    - PermissionTypeKnowledgeEdit
+    - PermissionTypeKnowledgeDelete
+    - PermissionTypeKnowledgeUpload
+    - PermissionTypeKnowledgeCreate
+    - PermissionTypeAgentView
+    - PermissionTypeAgentEdit
+    - PermissionTypeAgentDelete
+    - PermissionTypeAgentCreate
+    - PermissionKnowledgeReadOnly
+    - PermissionKnowledgeReadWrite
+    - PermissionKnowledgeAdmin
+    - PermissionKnowledgeAll
+    - PermissionAgentReadOnly
+    - PermissionAgentReadWrite
+    - PermissionAgentAdmin
+    - PermissionAgentAll
+  enum.ResourceType:
+    enum:
+    - knowledge
+    - agent
+    type: string
+    x-enum-varnames:
+    - ResourceTypeKnowledge
+    - ResourceTypeAgent
+  enum.SpaceType:
+    enum:
+    - personal
+    - org
+    - tone
+    type: string
+    x-enum-varnames:
+    - SpaceTypePersonal
+    - SpaceTypeOrg
+    - SpaceTypeTone
+  model.Page-bo_AgentBO:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/bo.AgentBO'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  model.Page-bo_KnowledgeBO:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/bo.KnowledgeBO'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  model.Page-bo_PermissionBO:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/bo.PermissionBO'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  model.Page-bo_ResourceTreeNode:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/bo.ResourceTreeNode'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  model.Page-bo_UserAuthBO:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/bo.UserAuthBO'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  model.Page-bo_UserGroupBO:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/bo.UserGroupBO'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  rpccode.ErrInfo:
+    properties:
+      msg:
+        type: string
+      reference:
+        type: string
+      title:
+        type: string
+    type: object
+  web.CompletionRequest:
+    properties:
+      doc_ids:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      message:
+        type: string
+    required:
+    - message
+    type: object
+  web.CreateSessionBookmarkRequest:
+    properties:
+      agent_id:
+        type: string
+      agent_type:
+        type: string
+      name:
+        type: string
+      session_id:
+        type: string
+    required:
+    - agent_id
+    - agent_type
+    - name
+    - session_id
+    type: object
+  web.DeleteDocumentRequest:
+    properties:
+      doc_id:
+        items:
+          type: string
+        type: array
+    type: object
+  web.DeleteMsgRequest:
+    properties:
+      message_id:
+        type: string
+    required:
+    - message_id
+    type: object
+  web.DocumentThumbnailRequest:
+    properties:
+      doc_id:
+        type: string
+    type: object
+  web.ListChunkRequest:
+    properties:
+      doc_id:
+        type: string
+      keywords:
+        type: string
+      page:
+        type: integer
+      size:
+        type: integer
+    type: object
+  web.QuickCreateSessionRequest:
+    properties:
+      agent_id:
+        type: string
+      agent_type:
+        $ref: '#/definitions/enum.AgentType'
+      name:
+        type: string
+      query:
+        additionalProperties: true
+        type: object
+    required:
+    - agent_id
+    - agent_type
+    - name
+    type: object
+  web.QuickReloadMsgRequest:
+    properties:
+      message_id:
+        type: string
+    required:
+    - message_id
+    type: object
+  web.RenameDocumentRequest:
+    properties:
+      doc_id:
+        type: string
+      name:
+        type: string
+    type: object
+  web.RunDocumentRequest:
+    properties:
+      delete:
+        type: boolean
+      doc_ids:
+        items:
+          type: string
+        type: array
+      run:
+        type: integer
+    type: object
+  web.UpdateSessionRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  wrapper.Message:
+    properties:
+      code:
+        type: integer
+      data: {}
+    type: object
+  wrapper.MessageError:
+    properties:
+      code:
+        type: integer
+      error:
+        $ref: '#/definitions/rpccode.ErrInfo'
+    type: object
+host: localhost:8888
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a server for T-One API.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: T-One API
+  version: "1.0"
+paths:
+  /admin/agent/import:
+    post:
+      consumes:
+      - application/json
+      description: 导入智能体
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 导入智能体请求
+        in: body
+        name: agentImportRequest
+        required: true
+        schema:
+          $ref: '#/definitions/bo.AgentImportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 导入智能体
+      tags:
+      - 管理员
+  /agent:
+    post:
+      consumes:
+      - application/json
+      description: 创建新的智能体
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 智能体创建请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.AgentCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功的智能体信息
+          schema:
+            $ref: '#/definitions/bo.AgentBO'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 创建智能体
+      tags:
+      - 智能体管理
+  /agent/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的智能体
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 智能体ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 智能体不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除智能体
+      tags:
+      - 智能体管理
+    get:
+      consumes:
+      - application/json
+      description: 获取指定智能体的详细信息
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 智能体ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 智能体详情
+          schema:
+            $ref: '#/definitions/bo.AgentBO'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 智能体不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取智能体详情
+      tags:
+      - 智能体管理
+    put:
+      consumes:
+      - application/json
+      description: 更新指定智能体的信息
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 智能体ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 智能体更新请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.AgentUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 智能体不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 更新智能体
+      tags:
+      - 智能体管理
+  /agent/accessible:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户有权限访问的智能体列表
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: name
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 可访问的智能体列表
+          schema:
+            items:
+              $ref: '#/definitions/bo.AgentBO'
+            type: array
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取可访问智能体列表
+      tags:
+      - 智能体管理
+  /agent/agimat/list:
+    post:
+      consumes:
+      - application/json
+      description: 获取AGIMAT智能体列表
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 智能体列表请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/agimat.ListAgentsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: AGIMAT智能体列表
+          schema:
+            $ref: '#/definitions/agimat.AgentListResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取AGIMAT智能体列表
+      tags:
+      - AGIMAT智能体管理
+  /agent/clone:
+    post:
+      consumes:
+      - application/json
+      description: 智能体克隆到当前用户
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 智能体克隆请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.AgentCloneRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 克隆后的智能体ID
+          schema:
+            type: integer
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 智能体不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 智能体克隆到当前用户
+      tags:
+      - 智能体管理
+  /agent/market:
+    get:
+      consumes:
+      - application/json
+      description: 获取市场智能体列表
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: name
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 市场智能体列表
+          schema:
+            $ref: '#/definitions/model.Page-bo_AgentBO'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取市场智能体列表
+      tags:
+      - 智能体管理
+  /agent/personal:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户的个人智能体列表
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: name
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 个人智能体列表
+          schema:
+            $ref: '#/definitions/model.Page-bo_AgentBO'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取个人智能体列表
+      tags:
+      - 智能体管理
+  /document/chunk/list/{kb_id}:
+    post:
+      consumes:
+      - application/json
+      description: 列出文档的chunk
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 知识库ID
+        in: path
+        name: kb_id
+        required: true
+        type: string
+      - description: 列出文档的chunk请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.ListChunkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 列出文档的chunk成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 列出文档的chunk
+      tags:
+      - 文档管理
+  /document/get/{kb_id}/{doc_id}:
+    get:
+      consumes:
+      - application/json
+      description: 下载/获取文档
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 知识库ID
+        in: path
+        name: kb_id
+        required: true
+        type: string
+      - description: 文档ID
+        in: path
+        name: doc_id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: 文档文件
+          schema:
+            type: file
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 文档不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 下载/获取文档
+      tags:
+      - 文档管理
+  /document/list:
+    post:
+      consumes:
+      - application/json
+      description: 列出文档
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 知识库ID
+        in: query
+        name: kb_id
+        required: true
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: 每页大小
+        in: query
+        name: page_size
+        required: true
+        type: integer
+      - description: 关键词
+        in: query
+        name: keywords
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 列出文档
+      tags:
+      - 文档管理
+  /document/rename/{kb_id}:
+    post:
+      consumes:
+      - application/json
+      description: 重命名文档
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 知识库ID
+        in: path
+        name: kb_id
+        required: true
+        type: string
+      - description: 重命名文档请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.RenameDocumentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 重命名成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 重命名文档
+      tags:
+      - 文档管理
+  /document/rm/{kb_id}:
+    post:
+      consumes:
+      - application/json
+      description: 删除文档
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 知识库ID
+        in: path
+        name: kb_id
+        required: true
+        type: string
+      - description: 删除文档请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.DeleteDocumentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除文档
+      tags:
+      - 文档管理
+  /document/run/{kb_id}:
+    post:
+      consumes:
+      - application/json
+      description: 运行文档
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 知识库ID
+        in: path
+        name: kb_id
+        required: true
+        type: string
+      - description: 运行文档请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.RunDocumentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 运行成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 运行文档
+      tags:
+      - 文档管理
+  /document/upload/{kb_id}:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传文档
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 知识库ID
+        in: path
+        name: kb_id
+        required: true
+        type: string
+      - description: 知识库ID
+        in: formData
+        name: kb_id
+        required: true
+        type: string
+      - description: 文档文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 上传成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 上传文档
+      tags:
+      - 文档管理
+  /groups:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户组树结构，支持多个根节点
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户组树列表
+          schema:
+            items:
+              $ref: '#/definitions/bo.UserGroupTreeNode'
+            type: array
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户组树
+      tags:
+      - 用户组管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新用户组
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 用户组创建请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.UserGroupCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 创建用户组
+      tags:
+      - 用户组管理
+  /groups/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除用户组
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 用户组ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 用户组不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除用户组
+      tags:
+      - 用户组管理
+    put:
+      consumes:
+      - application/json
+      description: 更新用户组信息
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 用户组ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 用户组更新请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.UserGroupUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 用户组不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 更新用户组
+      tags:
+      - 用户组管理
+  /groups/{id}/users:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定用户组中的用户列表，支持分页查询
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 用户组ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量，默认10，最大100
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户列表
+          schema:
+            $ref: '#/definitions/model.Page-bo_UserAuthBO'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 用户组不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户组用户列表
+      tags:
+      - 用户组管理
+  /groups/search:
+    get:
+      consumes:
+      - application/json
+      description: 搜索用户组，支持路径和名称模糊搜索
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 路径模糊搜索
+        in: query
+        name: path
+        type: string
+      - description: 名称模糊搜索
+        in: query
+        name: name
+        type: string
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量，默认10，最大100
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户组列表
+          schema:
+            $ref: '#/definitions/model.Page-bo_UserGroupBO'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 搜索用户组
+      tags:
+      - 用户组管理
+  /groups/users:
+    delete:
+      consumes:
+      - application/json
+      description: 从指定用户组中移除用户
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 用户组ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.UserToGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 移除成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 用户组或用户不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 从用户组移除用户
+      tags:
+      - 用户组管理
+    post:
+      consumes:
+      - application/json
+      description: 将用户添加到指定用户组
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 添加用户请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.UserToGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 添加成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 用户组或用户不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 添加用户到用户组
+      tags:
+      - 用户组管理
+  /groups/users/{orgID}/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定用户所属的用户组列表
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 用户ID
+        in: path
+        name: userID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户组列表
+          schema:
+            items:
+              $ref: '#/definitions/bo.UserGroupBO'
+            type: array
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户所属的用户组
+      tags:
+      - 用户组管理
+  /knowledge:
+    post:
+      consumes:
+      - application/json
+      description: 创建新的知识库
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 知识库创建请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.KnowledgeCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功的知识库信息
+          schema:
+            $ref: '#/definitions/bo.KnowledgeBO'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 创建知识库
+      tags:
+      - 知识库管理
+  /knowledge/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的知识库
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 知识库ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 知识库不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除知识库
+      tags:
+      - 知识库管理
+    get:
+      consumes:
+      - application/json
+      description: 获取指定知识库的详细信息
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 知识库ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 知识库详情
+          schema:
+            $ref: '#/definitions/bo.KnowledgeBO'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 知识库不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取知识库详情
+      tags:
+      - 知识库管理
+    put:
+      consumes:
+      - application/json
+      description: 更新指定知识库的信息
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 知识库ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 知识库更新请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.KnowledgeUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 知识库不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 更新知识库
+      tags:
+      - 知识库管理
+  /knowledge/accessible:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户有权限访问的知识库列表
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - in: query
+        name: groupId
+        type: integer
+      - in: query
+        name: name
+        type: string
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 可访问的知识库列表
+          schema:
+            items:
+              $ref: '#/definitions/bo.KnowledgeBO'
+            type: array
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取可访问知识库列表
+      tags:
+      - 知识库管理
+  /knowledge/personal:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户有权限访问的知识库列表
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 可访问的知识库列表
+          schema:
+            items:
+              $ref: '#/definitions/bo.KnowledgeBO'
+            type: array
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取个人知识库列表
+      tags:
+      - 知识库管理
+  /organizations:
+    post:
+      consumes:
+      - application/json
+      description: 创建新组织（仅管理员可用）
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 组织创建请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.OrganizationCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功的组织ID
+          schema:
+            type: integer
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 创建组织
+      tags:
+      - 组织管理
+  /organizations/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定组织（仅管理员可用）
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 组织ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 组织不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除组织
+      tags:
+      - 组织管理
+    put:
+      consumes:
+      - application/json
+      description: 更新组织信息（仅管理员可用）
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 组织ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 组织更新请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.OrganizationUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 组织不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 更新组织
+      tags:
+      - 组织管理
+  /organizations/{id}/users:
+    post:
+      consumes:
+      - application/json
+      description: 将用户添加到指定组织（仅管理员可用）
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 组织ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 添加用户请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.OrganizationAddUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 添加成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 组织或用户不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 添加用户到组织
+      tags:
+      - 组织管理
+  /organizations/{id}/users/{userID}:
+    delete:
+      consumes:
+      - application/json
+      description: 从指定组织中移除用户（仅管理员可用）
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 组织ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 用户ID
+        in: path
+        name: userID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 移除成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 组织或用户不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 从组织移除用户
+      tags:
+      - 组织管理
+  /organizations/users:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定组织中的所有用户，支持email模糊查询和分页
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: email模糊查询
+        in: query
+        name: email
+        type: string
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量，默认10，最大100
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户列表
+          schema:
+            $ref: '#/definitions/model.Page-bo_UserAuthBO'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 组织不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取组织用户列表
+      tags:
+      - 组织管理
+  /permissions:
+    get:
+      consumes:
+      - application/json
+      description: 获取权限列表，支持多种过滤条件和分页
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 名称模糊搜索
+        in: query
+        name: name
+        type: string
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量，默认10，最大100
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 权限列表
+          schema:
+            $ref: '#/definitions/model.Page-bo_PermissionBO'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取权限列表
+      tags:
+      - 权限管理
+  /permissions/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据权限ID获取权限授权的详细信息，包括被授权方、目标资源、权限类型等
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 权限ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 权限详情
+          schema:
+            $ref: '#/definitions/bo.PermissionDetailBO'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 权限不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取权限详情
+      tags:
+      - 权限管理
+    put:
+      consumes:
+      - application/json
+      description: 编辑权限授权信息，本质上等同于重新授权，需要提供完整的主体、目标和权限配置。会删除原有权限关系，基于新配置重新创建
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 权限更新请求（包含完整的权限配置）
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.PermissionUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 权限不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 编辑权限
+      tags:
+      - 权限管理
+  /permissions/available:
+    post:
+      consumes:
+      - application/json
+      description: 根据选择的目标获取可以授予的权限选项，支持按分类返回
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 获取可用权限请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.AvailablePermissionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 可用权限选项
+          schema:
+            $ref: '#/definitions/bo.AvailablePermissionsResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取可用权限选项
+      tags:
+      - 权限管理
+  /permissions/batch-revoke:
+    post:
+      consumes:
+      - application/json
+      description: 批量撤销多个权限授权记录
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 批量撤销权限请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.PermissionBatchRevokeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 撤销成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 批量撤销权限
+      tags:
+      - 权限管理
+  /permissions/check:
+    post:
+      consumes:
+      - application/json
+      description: 检查主体是否拥有对资源的权限
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 权限检查请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.ResourcePermissionCheckRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 权限检查结果
+          schema:
+            $ref: '#/definitions/bo.ResourcePermissionCheckResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 检查权限
+      tags:
+      - 权限管理
+  /permissions/grant:
+    post:
+      consumes:
+      - application/json
+      description: 授予主体对资源的权限
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 授权请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.PermissionGrantRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 授权成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 授予权限
+      tags:
+      - 权限管理
+  /permissions/revoke:
+    post:
+      consumes:
+      - application/json
+      description: 撤销主体对资源的权限
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 撤销权限请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.PermissionRevokeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 撤销成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 撤销权限
+      tags:
+      - 权限管理
+  /resources/accessible:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户有权限访问的资源树列表，包括节点权限和挂载的知识库、智能体
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 资源类型：agent-智能体，knowledge-知识库，不传则返回所有类型
+        enum:
+        - knowledge
+        - agent
+        in: query
+        name: resourceType
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户可访问的资源树列表
+          schema:
+            items:
+              $ref: '#/definitions/bo.AccessibleResourceTreeNode'
+            type: array
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户有权限访问的资源树
+      tags:
+      - 资源管理
+  /resources/agent/unmounted:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有未挂载到资源树的组织智能体
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      - description: 智能体名称，支持模糊搜索
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 未挂载的组织智能体列表
+          schema:
+            $ref: '#/definitions/model.Page-bo_AgentBO'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取未挂载的组织智能体列表
+      tags:
+      - 资源管理
+  /resources/knowledge/unmounted:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有未挂载到资源树的组织知识库
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      - description: 知识库名称，支持模糊搜索
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 未挂载的组织知识库列表
+          schema:
+            $ref: '#/definitions/model.Page-bo_KnowledgeBO'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取未挂载的组织知识库列表
+      tags:
+      - 资源管理
+  /resources/mount:
+    post:
+      consumes:
+      - application/json
+      description: 将知识库或智能体挂载到资源树节点
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 挂载请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.MountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 挂载成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 挂载资源到节点
+      tags:
+      - 资源管理
+  /resources/mounted/search:
+    get:
+      consumes:
+      - application/json
+      description: 搜索已挂载的资源（智能体和知识库），支持名称模糊搜索
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 资源类型：agent-智能体，knowledge-知识库
+        enum:
+        - knowledge
+        - agent
+        in: query
+        name: resourceType
+        type: string
+      - description: 名称模糊搜索
+        in: query
+        name: name
+        type: string
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量，默认10，最大100
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 已挂载资源列表
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 搜索已挂载资源
+      tags:
+      - 资源管理
+  /resources/nodes/search:
+    get:
+      consumes:
+      - application/json
+      description: 搜索资源节点，支持路径和名称模糊搜索
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 路径模糊搜索
+        in: query
+        name: path
+        type: string
+      - description: 名称模糊搜索
+        in: query
+        name: name
+        type: string
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量，默认10，最大100
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 资源节点列表
+          schema:
+            $ref: '#/definitions/model.Page-bo_ResourceTreeNode'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 搜索资源节点
+      tags:
+      - 资源管理
+  /resources/tree:
+    get:
+      consumes:
+      - application/json
+      description: 获取资源树结构，支持多个根节点
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 资源树列表
+          schema:
+            items:
+              $ref: '#/definitions/bo.ResourceTreeNode'
+            type: array
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取资源树
+      tags:
+      - 资源管理
+  /resources/tree/data:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定资源树节点上挂载的智能体和知识库数据
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 资源树节点ID
+        in: query
+        name: treeNodeId
+        required: true
+        type: integer
+      - description: 资源类型：agent-智能体，knowledge-知识库，不传则返回所有类型
+        in: query
+        name: resourceType
+        type: string
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      - description: 每页大小，默认10，最大100
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 资源树挂载数据
+          schema:
+            $ref: '#/definitions/bo.ResourceTreeDataResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 资源树节点不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取资源树挂载数据
+      tags:
+      - 资源管理
+  /resources/tree/node:
+    post:
+      consumes:
+      - application/json
+      description: 创建新资源
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 资源创建请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.ResourceTreeNodeCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 创建资源
+      tags:
+      - 资源管理
+  /resources/tree/node/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除资源
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 资源ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 资源不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 删除资源
+      tags:
+      - 资源管理
+    put:
+      consumes:
+      - application/json
+      description: 更新资源信息
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 资源ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 资源更新请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.ResourceTreeNodeUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "404":
+          description: 资源不存在
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 更新资源
+      tags:
+      - 资源管理
+  /resources/unmount:
+    post:
+      consumes:
+      - application/json
+      description: 将知识库或智能体从资源树节点卸载
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 卸载请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.UnmountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 卸载成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "403":
+          description: 权限不足
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 从节点卸载资源
+      tags:
+      - 资源管理
+  /session-bookmark:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户的会话书签列表
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量，默认10
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 会话书签列表
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取会话书签列表
+      tags:
+      - 会话书签
+    post:
+      consumes:
+      - application/json
+      description: 创建新的会话书签
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话书签创建请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.CreateSessionBookmarkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功的书签ID
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 创建会话书签
+      tags:
+      - 会话书签
+  /session-bookmark/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的会话书签
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 书签ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 书签不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 删除会话书签
+      tags:
+      - 会话书签
+  /sessions/{id}/completion:
+    post:
+      consumes:
+      - application/json
+      description: 使用大模型进行流式补全，支持参数控制生成过程
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 智能体ID
+        in: query
+        name: agent_id
+        required: true
+        type: string
+      - description: 智能体类型
+        enum:
+        - chat
+        - workflow
+        - autonomous_decision
+        - am_agent
+        in: query
+        name: agent_type
+        required: true
+        type: string
+      - description: 补全请求和生成参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.CompletionRequest'
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: 流式响应
+          schema:
+            type: string
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 会话不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 大模型流式补全
+      tags:
+      - 会话管理
+  /sessions/{id}/files/infos:
+    post:
+      consumes:
+      - application/json
+      description: 获取会话文件信息
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 文件ID列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/client.DocumentInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 文件信息
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 会话文件-信息获取
+      tags:
+      - 会话管理
+  /sessions/{id}/files/thumbnails:
+    post:
+      consumes:
+      - application/json
+      description: 获取会话文件缩略图
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 文件ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.DocumentThumbnailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 缩略图信息
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 会话文件-获取缩略图
+      tags:
+      - 会话管理
+  /sessions/{id}/files/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传并解析会话文件
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 上传成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 会话文件-上传并解析
+      tags:
+      - 会话管理
+  /sessions/{id}/messages/reload/stream:
+    post:
+      consumes:
+      - application/json
+      description: 重新生成指定会话中的消息，并以流式方式返回响应
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 智能体ID
+        in: query
+        name: agent_id
+        required: true
+        type: string
+      - description: 智能体类型
+        enum:
+        - chat
+        - workflow
+        - autonomous_decision
+        - am_agent
+        in: query
+        name: agent_type
+        required: true
+        type: string
+      - description: 重新生成消息请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.QuickReloadMsgRequest'
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: 流式响应
+          schema:
+            type: string
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 会话不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 重新生成消息流式响应
+      tags:
+      - 会话管理
+  /sessions/{id}/running-stream:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定会话的正在运行的stream数据，以SSE方式返回
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 智能体ID
+        in: query
+        name: agent_id
+        required: true
+        type: string
+      - description: 智能体类型
+        enum:
+        - chat
+        - workflow
+        - autonomous_decision
+        - am_agent
+        in: query
+        name: agent_type
+        required: true
+        type: string
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: 流式响应
+          schema:
+            type: string
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 会话不存在或没有正在运行的stream
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 获取正在运行的stream数据
+      tags:
+      - 会话管理
+  /sessions/{id}/stop-stream:
+    post:
+      consumes:
+      - application/json
+      description: 终止指定会话的正在运行的stream
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 智能体ID
+        in: query
+        name: agent_id
+        required: true
+        type: string
+      - description: 智能体类型
+        enum:
+        - chat
+        - workflow
+        - autonomous_decision
+        - am_agent
+        in: query
+        name: agent_type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功终止
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 会话不存在或没有正在运行的stream
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 终止正在运行的stream
+      tags:
+      - 会话管理
+  /sessions/quick:
+    get:
+      consumes:
+      - application/json
+      description: 快速获取指定智能体的会话列表，直接指定agent类型
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 智能体ID
+        in: query
+        name: agent_id
+        required: true
+        type: string
+      - description: 智能体类型
+        enum:
+        - chat
+        - workflow
+        - autonomous_decision
+        - am_agent
+        in: query
+        name: agent_type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 会话列表
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 快速获取会话列表
+      tags:
+      - 会话管理
+    post:
+      consumes:
+      - application/json
+      description: 快速创建新的智能体会话，直接指定agent类型
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话创建请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.QuickCreateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 创建成功的会话ID
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 快速创建会话
+      tags:
+      - 会话管理
+  /sessions/quick/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 快速删除指定的会话，直接指定agent类型
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 智能体ID
+        in: query
+        name: agent_id
+        required: true
+        type: string
+      - description: 智能体类型
+        enum:
+        - chat
+        - workflow
+        - autonomous_decision
+        - am_agent
+        in: query
+        name: agent_type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 会话不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 快速删除会话
+      tags:
+      - 会话管理
+    get:
+      consumes:
+      - application/json
+      description: 快速获取指定会话的详细信息，直接指定agent类型
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 智能体ID
+        in: query
+        name: agent_id
+        required: true
+        type: string
+      - description: 智能体类型
+        enum:
+        - chat
+        - workflow
+        - autonomous_decision
+        - am_agent
+        in: query
+        name: agent_type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 会话详情
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 会话不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 快速获取会话详情
+      tags:
+      - 会话管理
+    put:
+      consumes:
+      - application/json
+      description: 快速更新指定会话的信息，直接指定agent类型
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 智能体ID
+        in: query
+        name: agent_id
+        required: true
+        type: string
+      - description: 智能体类型
+        enum:
+        - chat
+        - workflow
+        - autonomous_decision
+        - am_agent
+        in: query
+        name: agent_type
+        required: true
+        type: string
+      - description: 会话更新请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.UpdateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 会话不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 快速更新会话
+      tags:
+      - 会话管理
+  /sessions/quick/messages/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 快速删除指定会话中的消息，直接指定agent类型
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 智能体ID
+        in: query
+        name: agent_id
+        required: true
+        type: string
+      - description: 智能体类型
+        enum:
+        - chat
+        - workflow
+        - autonomous_decision
+        in: query
+        name: agent_type
+        required: true
+        type: string
+      - description: 删除消息请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/web.DeleteMsgRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 未授权
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 会话或消息不存在
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 快速删除会话消息
+      tags:
+      - 会话管理
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户列表，可按条件筛选
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 用户列表请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.ListUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户列表
+          schema:
+            items:
+              $ref: '#/definitions/bo.UserAuthBO'
+            type: array
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户列表
+      tags:
+      - 用户管理
+  /users/info:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户信息
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户信息
+          schema:
+            $ref: '#/definitions/bo.UserAuthBO'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户信息
+      tags:
+      - 用户管理
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: 处理用户登录请求并返回认证令牌
+      parameters:
+      - description: 登录请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登录成功响应
+          schema:
+            $ref: '#/definitions/bo.UserLoginResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 认证失败
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      summary: 用户登录
+      tags:
+      - 用户管理
+  /users/password/setting:
+    post:
+      consumes:
+      - application/json
+      description: 修改用户密码
+      parameters:
+      - description: 认证令牌
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 用户设置请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.UserSettingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 设置成功
+          schema:
+            $ref: '#/definitions/wrapper.Message'
+        "401":
+          description: 未授权
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      security:
+      - ApiKeyAuth: []
+      summary: 修改用户密码
+      tags:
+      - 用户管理
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: 处理用户注册请求并返回认证令牌
+      parameters:
+      - description: 注册请求参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/bo.UserCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 注册成功响应
+          schema:
+            $ref: '#/definitions/bo.UserLoginResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+        "401":
+          description: 认证失败
+          schema:
+            $ref: '#/definitions/wrapper.MessageError'
+      summary: 用户注册
+      tags:
+      - 用户管理
+swagger: "2.0"
