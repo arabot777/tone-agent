@@ -5,12 +5,10 @@ import (
 )
 
 type BaseConfig struct {
-}
-
-type InitConfig struct {
-	DefaultOrganizationName string
-	DefaultAdminUsername    string
-	DefaultAdminPassword    string
+	// default model
+	DefaultLLMModel    string
+	DefaultLLMEndpoint string
+	DefaultLLMSK       string
 }
 
 func InitBaseConfig(r *reader.Reader) BaseConfig {

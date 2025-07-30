@@ -2,7 +2,6 @@ package web
 
 import (
 	"net/http"
-	"time"
 	"tone/agent/docs"
 	"tone/agent/internal/api/web/controller"
 	"tone/agent/pkg/common/app/rest"
@@ -19,8 +18,9 @@ import (
 
 func NewRouter() *rest.HTTPBundle {
 	return rest.New(
-		rest.ReadTimeout(120*time.Second),
-		rest.Timeout(120*time.Second),
+		rest.ReadTimeout(0),
+		rest.WriteTimeout(0),
+		rest.Timeout(0),
 		rest.WithRouter(router()),
 		rest.WithoutHTTP2(true),
 		rest.Port(env.Port()))
@@ -44,7 +44,10 @@ func router() http.Handler {
 		{
 			agentController := controller.NewAgentController()
 			agent.POST("/ok", agentController.Ok)
-			agent.GET("/drawing/stream", agentController.Drawing) // 健康检查接口
+			agent.GET("/einoagent/stream", agentController.Einoagent)
+			agent.GET("/journal/stream", agentController.Journal)
+			agent.GET("/", agentController.WebUI)
+			agent.GET("/:file", agentController.WebUIFile)
 		}
 
 	}
