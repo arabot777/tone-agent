@@ -1,12 +1,11 @@
 module tone/agent
 
-go 1.24.0
+go 1.23.0
 
-toolchain go1.24.5
+toolchain go1.23.4
 
 require (
 	github.com/cloudwego/eino v0.4.0
-	github.com/cloudwego/eino-examples v0.0.0-20250730024258-208c545ea755
 	github.com/cloudwego/eino-examples/quickstart/eino_assistant v0.0.0-20250730024258-208c545ea755
 	github.com/cloudwego/eino-ext/components/embedding/ark v0.0.0-20250729134059-2ccbac3c0210
 	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250728111816-90d294e367aa
@@ -90,6 +89,7 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/matoous/go-nanoid v1.5.1 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/meguminnnnnnnnn/go-openai v0.0.0-20250723112853-3bce976e5ccc // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -99,6 +99,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.22.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
 	github.com/quic-go/quic-go v0.48.2 // indirect
 	github.com/refraction-networking/utls v1.6.7 // indirect

@@ -45,6 +45,7 @@ func router() http.Handler {
 			agentController := controller.NewAgentController()
 			agent.POST("/ok", agentController.Ok)
 			agent.GET("/einoagent/stream", agentController.Einoagent)
+			agent.GET("/drawing/stream", agentController.Drawing)
 			agent.GET("/journal/stream", agentController.Journal)
 			agent.GET("/", agentController.WebUI)
 			agent.GET("/:file", agentController.WebUIFile)

@@ -118,8 +118,6 @@ github.com/cloudwego/base64x v0.1.5 h1:XPciSp1xaq2VCSt6lF0phncD4koWyULpl5bUxbfCy
 github.com/cloudwego/base64x v0.1.5/go.mod h1:0zlkT4Wn5C6NdauXdJRhSKRlJvmclQ1hhJgA0rcu/8w=
 github.com/cloudwego/eino v0.4.0 h1:5gMwO6HGtn/bn1M3l5cY8y9k+TO+fCcJZ14z+S3pTaQ=
 github.com/cloudwego/eino v0.4.0/go.mod h1:wUjz990apdsaOraOXdh6CdhVXq8DJsOvLsVlxNTcNfY=
-github.com/cloudwego/eino-examples v0.0.0-20250730024258-208c545ea755 h1:6Y0Ch1si8TUMPhf3YqLzBFvTs5wud/THlhTpL3q70Rw=
-github.com/cloudwego/eino-examples v0.0.0-20250730024258-208c545ea755/go.mod h1:omHyTom99BGQ2uZBNrk/RZ1llX7kgpdsOaJT2pQCLNo=
 github.com/cloudwego/eino-examples/quickstart/eino_assistant v0.0.0-20250730024258-208c545ea755 h1:jD5LW61sFz5CJi+xcOaUj72Olbr/sdVMB5B3tCJKa8c=
 github.com/cloudwego/eino-examples/quickstart/eino_assistant v0.0.0-20250730024258-208c545ea755/go.mod h1:Bocxy0b49/A7AsKWRTPO1SyiOi/uF7d21durlnrkJkE=
 github.com/cloudwego/eino-ext/components/embedding/ark v0.0.0-20250729134059-2ccbac3c0210 h1:0vylxlJt75N6BZ8v0cC19G6I1gY+oF9XKnaXKBdES6U=

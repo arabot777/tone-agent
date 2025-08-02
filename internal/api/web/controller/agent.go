@@ -132,6 +132,57 @@ outer:
 	}
 }
 
+func (c *AgentController) Drawing(g *gin.Context) {
+	id := g.Query("id")
+	message := g.Query("message")
+	if id == "" || message == "" {
+		g.JSON(http.StatusBadRequest, code.ReqParseErr.Msg("missing id or message"))
+		return
+	}
+	ctx, cancel := context.WithTimeout(g.Request.Context(), 100*time.Minute)
+	defer cancel()
+	logger.Infof(ctx, "[Chat] Starting chat with ID: %s, Message: %s", id, message)
+
+	sr, err := c.agentService.Drawing(ctx, id, message)
+	if err != nil {
+		logger.Errorf(ctx, "[Chat] Error running agent: %v", err)
+		g.JSON(consts.StatusInternalServerError, err)
+		return
+	}
+
+	// 设置 SSE 响应头
+	g.Header("Content-Type", "text/event-stream")
+	g.Header("Cache-Control", "no-cache")
+	g.Header("Connection", "keep-alive")
+	g.Header("Access-Control-Allow-Origin", "*")
+
+	defer func() {
+		sr.Close()
+		logger.Infof(ctx, "[Chat] Finished chat with ID: %s", id)
+	}()
+
+outer:
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Infof(ctx, "[Chat] Context done for chat ID: %s", id)
+			return
+		default:
+			msg, err := sr.Recv()
+			if errors.Is(err, io.EOF) {
+				logger.Infof(ctx, "[Chat] EOF received for chat ID: %s", id)
+				break outer
+			}
+			if err != nil {
+				logger.Infof(ctx, "[Chat] Error receiving message: %v", err)
+				break outer
+			}
+			g.SSEvent("data", msg)
+			g.Writer.Flush()
+		}
+	}
+}
+
 func (c *AgentController) Journal(g *gin.Context) {
 	// TODO SSE 返回
 
