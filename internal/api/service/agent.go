@@ -17,13 +17,10 @@ import (
 )
 
 type AgentService struct {
-	cbHandler callbacks.Handler
 }
 
 func NewAgentService() *AgentService {
-	return &AgentService{
-		cbHandler: LogCallback(nil),
-	}
+	return &AgentService{}
 }
 
 func (s *AgentService) Ok() string {
@@ -45,7 +42,7 @@ func (s *AgentService) Einoagent(ctx context.Context, id string, msg string) (*s
 		// History: conversation.GetMessages(),
 	}
 
-	sr, err := runner.Stream(ctx, userMessage, compose.WithCallbacks(s.cbHandler))
+	sr, err := runner.Stream(ctx, userMessage, compose.WithCallbacks())
 	if err != nil {
 		return nil, fmt.Errorf("failed to stream: %w", err)
 	}
@@ -149,7 +146,7 @@ func (s *AgentService) Drawing(ctx context.Context, id string, msg string) (*sch
 		return nil, fmt.Errorf("failed to build agent graph: %w", err)
 	}
 
-	sr, err := runner.Stream(ctx, userMessage, compose.WithCallbacks(s.cbHandler))
+	sr, err := runner.Stream(ctx, userMessage, compose.WithCallbacks())
 	if err != nil {
 		return nil, fmt.Errorf("failed to stream: %w", err)
 	}
