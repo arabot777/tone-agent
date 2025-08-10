@@ -4,22 +4,30 @@ import (
 	"bufio"
 	"context"
 	"embed"
+	"encoding/json"
 	"errors"
 	"io"
 	"mime"
 	"net/http"
+
 	"os"
 	"path/filepath"
 	"time"
 	"tone/agent/internal/api/service"
 	"tone/agent/internal/pkg/common/code"
+	"tone/agent/internal/pkg/infra"
+	"tone/agent/internal/pkg/model"
+	"tone/agent/internal/pkg/service/deep"
 	"tone/agent/internal/pkg/service/journal"
 	"tone/agent/pkg/common/logger"
+	"tone/agent/pkg/utils"
 
+	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/flow/agent/multiagent/host"
 	"github.com/cloudwego/eino/schema"
+	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	"github.com/gin-gonic/gin"
+	"github.com/cloudwego/hertz/pkg/protocol/sse"
 )
 
 //go:embed ui
@@ -35,25 +43,25 @@ func NewAgentController() *AgentController {
 	}
 }
 
-func (c *AgentController) Ok(g *gin.Context) {
-	g.JSON(http.StatusOK, c.agentService.Ok())
+func (c *AgentController) Ok(ctx context.Context, req *app.RequestContext) {
+	req.JSON(consts.StatusOK, c.agentService.Ok())
 }
 
-func (c *AgentController) WebUI(g *gin.Context) {
+func (c *AgentController) WebUI(ctx context.Context, req *app.RequestContext) {
 	content, err := webContent.ReadFile("ui/index.html")
 	if err != nil {
-		g.String(consts.StatusNotFound, "File not found")
+		req.String(consts.StatusNotFound, "File not found")
 		return
 	}
-	g.Header("Content-Type", "text/html")
-	g.Data(http.StatusOK, "text/html", content)
+	req.Response.Header.Set("Content-Type", "text/html")
+	req.Data(consts.StatusOK, "text/html", content)
 }
 
-func (c *AgentController) WebUIFile(g *gin.Context) {
-	file := g.Param("file")
+func (c *AgentController) WebUIFile(ctx context.Context, req *app.RequestContext) {
+	file := req.Param("file")
 	content, err := webContent.ReadFile("ui/" + file)
 	if err != nil {
-		g.String(consts.StatusNotFound, "File not found")
+		req.String(consts.StatusNotFound, "File not found")
 		return
 	}
 
@@ -61,35 +69,34 @@ func (c *AgentController) WebUIFile(g *gin.Context) {
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
-	g.Header("Content-Type", contentType)
-	g.Data(http.StatusOK, contentType, content)
+	req.Response.Header.Set("Content-Type", contentType)
+	req.Data(consts.StatusOK, contentType, content)
 }
 
-func (c *AgentController) Einoagent(g *gin.Context) {
-	id := g.Query("id")
-	message := g.Query("message")
+func (c *AgentController) Einoagent(ctx context.Context, req *app.RequestContext) {
+	id := string(req.Query("id"))
+	message := string(req.Query("message"))
 	if id == "" || message == "" {
-		g.JSON(http.StatusBadRequest, code.ReqParseErr.Msg("missing id or message"))
+		req.JSON(consts.StatusBadRequest, code.ReqParseErr.Msg("missing id or message"))
 		return
 	}
-	// ctx := g.Request.Context()
 	// 创建带有更长超时的新 context
-	ctx, cancel := context.WithTimeout(g.Request.Context(), 100*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 100*time.Minute)
 	defer cancel()
 	logger.Infof(ctx, "[Chat] Starting chat with ID: %s, Message: %s", id, message)
 
 	sr, err := c.agentService.Einoagent(ctx, id, message)
 	if err != nil {
 		logger.Errorf(ctx, "[Chat] Error running agent: %v", err)
-		g.JSON(consts.StatusInternalServerError, err)
+		req.JSON(consts.StatusInternalServerError, err)
 		return
 	}
 
 	// 设置 SSE 响应头
-	g.Header("Content-Type", "text/event-stream")
-	g.Header("Cache-Control", "no-cache")
-	g.Header("Connection", "keep-alive")
-	g.Header("Access-Control-Allow-Origin", "*")
+	req.Response.Header.Set("Content-Type", "text/event-stream")
+	req.Response.Header.Set("Cache-Control", "no-cache")
+	req.Response.Header.Set("Connection", "keep-alive")
+	req.Response.Header.Set("Access-Control-Allow-Origin", "*")
 
 	defer func() {
 		sr.Close()
@@ -117,10 +124,8 @@ outer:
 				break outer
 			}
 			// 发送 SSE 格式数据
-			// g.Writer.WriteString("data: " + msg.Content + "\n\n")
-			// flusher.Flush()
-			g.SSEvent("data", msg)
-			g.Writer.Flush()
+			req.SetBodyString("data: " + msg.Content + "\n\n")
+			// TODO: 需要适配 Hertz 的 SSE 流式响应
 			// err = s.Publish(&sse.Event{
 			// 	Data: []byte(msg.Content),
 			// })
@@ -132,29 +137,29 @@ outer:
 	}
 }
 
-func (c *AgentController) Drawing(g *gin.Context) {
-	id := g.Query("id")
-	message := g.Query("message")
+func (c *AgentController) Drawing(ctx context.Context, req *app.RequestContext) {
+	id := string(req.Query("id"))
+	message := string(req.Query("message"))
 	if id == "" || message == "" {
-		g.JSON(http.StatusBadRequest, code.ReqParseErr.Msg("missing id or message"))
+		req.JSON(consts.StatusBadRequest, code.ReqParseErr.Msg("missing id or message"))
 		return
 	}
-	ctx, cancel := context.WithTimeout(g.Request.Context(), 100*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 100*time.Minute)
 	defer cancel()
 	logger.Infof(ctx, "[Chat] Starting chat with ID: %s, Message: %s", id, message)
 
 	sr, err := c.agentService.Drawing(ctx, id, message)
 	if err != nil {
 		logger.Errorf(ctx, "[Chat] Error running agent: %v", err)
-		g.JSON(consts.StatusInternalServerError, err)
+		req.JSON(consts.StatusInternalServerError, err)
 		return
 	}
 
 	// 设置 SSE 响应头
-	g.Header("Content-Type", "text/event-stream")
-	g.Header("Cache-Control", "no-cache")
-	g.Header("Connection", "keep-alive")
-	g.Header("Access-Control-Allow-Origin", "*")
+	req.Response.Header.Set("Content-Type", "text/event-stream")
+	req.Response.Header.Set("Cache-Control", "no-cache")
+	req.Response.Header.Set("Connection", "keep-alive")
+	req.Response.Header.Set("Access-Control-Allow-Origin", "*")
 
 	defer func() {
 		sr.Close()
@@ -177,20 +182,100 @@ outer:
 				logger.Infof(ctx, "[Chat] Error receiving message: %v", err)
 				break outer
 			}
-			g.SSEvent("data", msg)
-			g.Writer.Flush()
+			req.SetBodyString("data: " + msg.Content + "\n\n")
+			// TODO: 需要适配 Hertz 的 SSE 流式响应
 		}
 	}
 }
 
-func (c *AgentController) Journal(g *gin.Context) {
+func (a *AgentController) Researcher(ctx context.Context, c *app.RequestContext) {
+	// 设置响应头（NewStream 会自动设置部分头，但建议显式声明）
+	c.SetContentType("text/event-stream; charset=utf-8")
+	c.Response.Header.Set("Cache-Control", "no-cache")
+	c.Response.Header.Set("Connection", "keep-alive")
+	c.Response.Header.Set("Access-Control-Allow-Origin", "*")
+
+	c.SetStatusCode(http.StatusOK)
+	// 初始化一个sse writer
+	w := sse.NewWriter(c)
+	defer w.Close()
+
+	// 请求体校验
+	req := new(model.ChatRequest)
+	err := c.BindAndValidate(req)
+	if err != nil {
+		return
+	}
+	logger.Infof(ctx, "ChatStream_begin, req: %v", req)
+
+	// 根据前端参数生成Graph State
+	genFunc := func(ctx context.Context) *model.State {
+		return &model.State{
+			MaxPlanIterations:             req.MaxPlanIterations,
+			MaxStepNum:                    req.MaxStepNum,
+			Messages:                      req.Messages,
+			Goto:                          deep.Coordinator,
+			EnableBackgroundInvestigation: req.EnableBackgroundInvestigation,
+		}
+	}
+
+	// Build Graph
+	r := deep.Builder[string, string, *model.State](ctx, genFunc)
+
+	// Run Graph
+	_, err = r.Stream(ctx, deep.Coordinator,
+		compose.WithCheckPointID(req.ThreadID), // 指定Graph的CheckPointID
+		// 中断后，获取用户的edit_plan信息
+		compose.WithStateModifier(func(ctx context.Context, path compose.NodePath, state any) error {
+			s := state.(*model.State)
+			s.InterruptFeedback = req.InterruptFeedback
+			if req.InterruptFeedback == "edit_plan" {
+				s.Messages = append(s.Messages, req.Messages...)
+			}
+			logger.Infof(ctx, "ChatStream_modf", "path", path.GetPath(), "state", state)
+			return nil
+		}),
+		// 连接LoggerCallback
+		compose.WithCallbacks(&infra.LoggerCallback{
+			ID:  req.ThreadID,
+			SSE: w,
+		}),
+	)
+
+	// 将interrupt信号传递到前端
+	if info, ok := compose.ExtractInterruptInfo(err); ok {
+		logger.Infof(ctx, "ChatStream_interrupt", "info", info)
+		data := &model.ChatResp{
+			ThreadID:     req.ThreadID,
+			ID:           "human_feedback:" + utils.RandStr(20),
+			Role:         "assistant",
+			Content:      "检查计划",
+			FinishReason: "interrupt",
+			Options: []map[string]any{
+				{
+					"text":  "编辑计划",
+					"value": "edit_plan",
+				},
+				{
+					"text":  "开始执行",
+					"value": "accepted",
+				},
+			},
+		}
+		dB, _ := json.Marshal(data)
+		w.WriteEvent("", "interrupt", dB)
+	}
+	if err != nil {
+		logger.Errorf(ctx, "ChatStream_error, err: %v", err)
+	}
+}
+
+func (c *AgentController) Journal(ctx context.Context, req *app.RequestContext) {
 	// TODO SSE 返回
 
 	openAIAPIKey := os.Getenv("OPENAI_API_KEY")
 	openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
 	openAIModelName := os.Getenv("OPENAI_MODEL_NAME")
-
-	ctx := g.Request.Context()
 
 	h, err := journal.NewJournal(ctx, openAIBaseURL, openAIAPIKey, openAIModelName)
 	if err != nil {

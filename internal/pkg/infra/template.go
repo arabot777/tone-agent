@@ -18,25 +18,18 @@ package infra
 
 import (
 	"context"
+	"embed"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 )
+
+//go:embed prompts/*.md
+var promptsFS embed.FS
 
 // GetPromptTemplate 加载并返回一个提示模板
 func GetPromptTemplate(ctx context.Context, promptName string) (string, error) {
-	// 获取当前文件所在目录
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("获取当前工作目录失败: %w", err)
-	}
-
-	// 构建模板文件路径
-	templatePath := filepath.Join(dir, "biz", "prompts", fmt.Sprintf("%s.md", promptName))
-
-	// 读取模板文件内容
-	content, err := ioutil.ReadFile(templatePath)
+	// 使用 embed.FS 读取嵌入的模板文件
+	filePath := fmt.Sprintf("prompts/%s.md", promptName)
+	content, err := promptsFS.ReadFile(filePath)
 	if err != nil {
 		return "", fmt.Errorf("读取模板文件 %s 失败: %w", promptName, err)
 	}

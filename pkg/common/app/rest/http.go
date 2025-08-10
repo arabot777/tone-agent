@@ -7,12 +7,15 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/cloudwego/hertz/pkg/app/server"
 )
 
 type HTTPBundle struct {
 	name       string
 	router     http.Handler
 	httpServer http.Server
+	hertzServer *server.Hertz // Add Hertz server support
 
 	timeout      time.Duration // 针对 client 端的限制，到时间返回，并不能到时间停止服务端 request
 	writeTimeout time.Duration // 对应 http server 的 writeTimeout
@@ -48,6 +51,13 @@ func (s *HTTPBundle) Name() string {
 }
 
 func (s *HTTPBundle) Run(ctx context.Context) error {
+	// If Hertz server is configured, use it
+	if s.hertzServer != nil {
+		s.hertzServer.Spin()
+		return nil
+	}
+
+	// Fallback to standard HTTP server
 	handler := s.router
 	if s.timeout != 0 {
 		handler = http.TimeoutHandler(s.router, s.timeout, "")
@@ -78,10 +88,19 @@ func (s *HTTPBundle) Run(ctx context.Context) error {
 func (s *HTTPBundle) Stop() context.Context {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
+		defer cancel()
+		// If Hertz server is configured, shut it down
+		if s.hertzServer != nil {
+			if err := s.hertzServer.Shutdown(ctx); err != nil {
+				fmt.Println(ctx, err)
+			}
+			return
+		}
+
+		// Fallback to standard HTTP server
 		if err := s.httpServer.Shutdown(ctx); err != nil {
 			fmt.Println(ctx, err)
 		}
-		cancel()
 	}()
 
 	return ctx

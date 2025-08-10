@@ -3,6 +3,8 @@ package rest
 import (
 	"net/http"
 	"time"
+
+	"github.com/cloudwego/hertz/pkg/app/server"
 )
 
 type Option func(*HTTPBundle)
@@ -40,5 +42,11 @@ func ReadTimeout(t time.Duration) Option {
 func WriteTimeout(t time.Duration) Option {
 	return func(bundle *HTTPBundle) {
 		bundle.writeTimeout = t
+	}
+}
+
+func WithHertzServer(hertzServer *server.Hertz) Option {
+	return func(bundle *HTTPBundle) {
+		bundle.hertzServer = hertzServer
 	}
 }

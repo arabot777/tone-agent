@@ -12,6 +12,7 @@ require (
 	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250728111816-90d294e367aa
 	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250729134059-2ccbac3c0210
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20250729134059-2ccbac3c0210
+	github.com/cloudwego/eino-ext/components/tool/mcp v0.0.3
 	github.com/cloudwego/eino-ext/devops v0.1.7
 	github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250728034832-de7648551801
 	github.com/cloudwego/hertz v0.10.1
@@ -24,8 +25,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.11.0
 	github.com/robfig/cron v1.2.0
-	github.com/swaggo/files v1.0.1
-	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.4
 	github.com/uptrace/opentelemetry-go-extra/otelzap v0.3.2
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.58.0
@@ -58,6 +57,8 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudflare/circl v1.5.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
+	github.com/cloudwego/gopkg v0.1.4 // indirect
+	github.com/cloudwego/netpoll v0.7.0 // indirect
 	github.com/corpix/uarand v0.2.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect

@@ -1,20 +1,21 @@
 package middleware
 
 import (
-	"net/http"
+	"context"
 	"strings"
 
-	"github.com/gin-gonic/gin"
+	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/protocol/consts"
 )
 
-func CheckHealth() gin.HandlerFunc {
-	f := func(g *gin.Context) {
-		if g.Request.Method == http.MethodGet &&
-			strings.EqualFold(g.Request.URL.Path, "/health") {
-			g.String(http.StatusOK, "ok")
+func CheckHealth() app.HandlerFunc {
+	f := func(ctx context.Context, c *app.RequestContext) {
+		if string(c.Method()) == "GET" &&
+			strings.EqualFold(string(c.Path()), "/health") {
+			c.String(consts.StatusOK, "ok")
 			return
 		}
-		g.Next()
+		c.Next(ctx)
 	}
 
 	return f
