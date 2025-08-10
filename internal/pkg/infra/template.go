@@ -36,3 +36,18 @@ func GetPromptTemplate(ctx context.Context, promptName string) (string, error) {
 
 	return string(content), nil
 }
+
+// GetDirPromptTemplate 加载并返回一个提示模板
+func GetDirPromptTemplate(ctx context.Context, dir, promptName string) (string, error) {
+	// 使用 embed.FS 读取嵌入的模板文件
+	if dir == "" {
+		return GetPromptTemplate(ctx, promptName)
+	}
+	filePath := fmt.Sprintf("prompts/%s/%s.md", dir, promptName)
+	content, err := promptsFS.ReadFile(filePath)
+	if err != nil {
+		return "", fmt.Errorf("读取模板文件 %s 失败: %w", promptName, err)
+	}
+
+	return string(content), nil
+}

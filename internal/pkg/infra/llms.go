@@ -20,6 +20,11 @@ func InitModel() {
 		BaseURL: os.Getenv("OPENAI_BASE_URL"),
 		Model:   os.Getenv("OPENAI_MODEL_NAME"),
 		APIKey:  os.Getenv("OPENAI_API_KEY"),
+		ExtraFields: map[string]interface{}{
+			"thinking": map[string]string{
+				"type": "disabled",
+			},
+		},
 	}
 	ChatModel, _ = openai.NewChatModel(context.Background(), config)
 	planSchema, _ := openapi3gen.NewSchemaRefForValue(&model.Plan{}, nil)

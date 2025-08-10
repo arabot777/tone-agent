@@ -42,7 +42,7 @@ func setupRoutes(h *server.Hertz) {
 		{
 			agent.POST("/ok", agentController.Ok)
 			agent.GET("/einoagent/stream", agentController.Einoagent)
-			agent.GET("/drawing/stream", agentController.Researcher)
+			agent.GET("/drawing/stream", agentController.Drawing)
 			agent.GET("/researcher/stream", agentController.Researcher)
 			agent.GET("/journal/stream", agentController.Journal)
 			agent.GET("/", agentController.WebUI)

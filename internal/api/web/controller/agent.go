@@ -137,55 +137,37 @@ outer:
 	}
 }
 
-func (c *AgentController) Drawing(ctx context.Context, req *app.RequestContext) {
-	id := string(req.Query("id"))
-	message := string(req.Query("message"))
-	if id == "" || message == "" {
-		req.JSON(consts.StatusBadRequest, code.ReqParseErr.Msg("missing id or message"))
-		return
-	}
-	ctx, cancel := context.WithTimeout(ctx, 100*time.Minute)
-	defer cancel()
-	logger.Infof(ctx, "[Chat] Starting chat with ID: %s, Message: %s", id, message)
+func (a *AgentController) Drawing(ctx context.Context, c *app.RequestContext) {
+	// 设置响应头（NewStream 会自动设置部分头，但建议显式声明）
+	c.SetContentType("text/event-stream; charset=utf-8")
+	c.Response.Header.Set("Cache-Control", "no-cache")
+	c.Response.Header.Set("Connection", "keep-alive")
+	c.Response.Header.Set("Access-Control-Allow-Origin", "*")
 
-	sr, err := c.agentService.Drawing(ctx, id, message)
+	c.SetStatusCode(http.StatusOK)
+	// 初始化一个sse writer
+	w := sse.NewWriter(c)
+	defer w.Close()
+
+	// 请求体校验
+	req := new(model.ChatRequest)
+	err := c.BindAndValidate(req)
 	if err != nil {
-		logger.Errorf(ctx, "[Chat] Error running agent: %v", err)
-		req.JSON(consts.StatusInternalServerError, err)
 		return
 	}
+	logger.Infof(ctx, "ChatStream_begin, req: %v", req)
 
-	// 设置 SSE 响应头
-	req.Response.Header.Set("Content-Type", "text/event-stream")
-	req.Response.Header.Set("Cache-Control", "no-cache")
-	req.Response.Header.Set("Connection", "keep-alive")
-	req.Response.Header.Set("Access-Control-Allow-Origin", "*")
-
-	defer func() {
-		sr.Close()
-		logger.Infof(ctx, "[Chat] Finished chat with ID: %s", id)
-	}()
-
-outer:
-	for {
-		select {
-		case <-ctx.Done():
-			logger.Infof(ctx, "[Chat] Context done for chat ID: %s", id)
-			return
-		default:
-			msg, err := sr.Recv()
-			if errors.Is(err, io.EOF) {
-				logger.Infof(ctx, "[Chat] EOF received for chat ID: %s", id)
-				break outer
-			}
-			if err != nil {
-				logger.Infof(ctx, "[Chat] Error receiving message: %v", err)
-				break outer
-			}
-			req.SetBodyString("data: " + msg.Content + "\n\n")
-			// TODO: 需要适配 Hertz 的 SSE 流式响应
+	// 根据前端参数生成Graph State
+	genFunc := func(ctx context.Context) *model.State {
+		return &model.State{
+			MaxPlanIterations:             req.MaxPlanIterations,
+			MaxStepNum:                    req.MaxStepNum,
+			Messages:                      req.Messages,
+			Goto:                          deep.Coordinator,
+			EnableBackgroundInvestigation: req.EnableBackgroundInvestigation,
 		}
 	}
+
 }
 
 func (a *AgentController) Researcher(ctx context.Context, c *app.RequestContext) {
