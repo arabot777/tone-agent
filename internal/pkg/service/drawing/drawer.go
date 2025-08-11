@@ -35,7 +35,7 @@ func loadDrawerMsg(ctx context.Context, name string, opts ...any) (output []*sch
 
 		var curStep *model.Step
 		for i := range state.CurrentPlan.Steps {
-			if state.CurrentPlan.Steps[i].ExecutionRes == nil {
+			if state.CurrentPlan.Steps[i].ExecutionRes == nil || *state.CurrentPlan.Steps[i].ExecutionRes == "" {
 				curStep = &state.CurrentPlan.Steps[i]
 				break
 			}
@@ -71,7 +71,7 @@ func routerDrawer(ctx context.Context, input *schema.Message, opts ...any) (outp
 			output = state.Goto
 		}()
 		for i, step := range state.CurrentPlan.Steps {
-			if step.ExecutionRes == nil {
+			if step.ExecutionRes == nil || *step.ExecutionRes == "" {
 				str := strings.Clone(last.Content)
 				state.CurrentPlan.Steps[i].ExecutionRes = &str
 				break
@@ -124,26 +124,30 @@ func toolCallChecker(_ context.Context, sr *schema.StreamReader[*schema.Message]
 func NewDrawerNode[I, O any](ctx context.Context) *compose.Graph[I, O] {
 	cag := compose.NewGraph[I, O]()
 
-	researchTools := []tool.BaseTool{}
+	drawerTools := []tool.BaseTool{}
 	for _, cli := range infra.MCPServer {
 		ts, err := mcp.GetTools(ctx, &mcp.Config{Cli: cli})
 		if err != nil {
-			ilog.EventError(ctx, err, "builder_error")
+			logger.Errorf(ctx, "builder_error, err: %v", err)
 		}
-		researchTools = append(researchTools, ts...)
+		drawerTools = append(drawerTools, ts...)
 	}
-	ilog.EventDebug(ctx, "researcher_end", "research_tools", len(researchTools))
+	logger.Infof(ctx, "researcher_end, research_tools: %v", len(drawerTools))
 
 	agent, err := react.NewAgent(ctx, &react.AgentConfig{
 		MaxStep:               40,
 		ToolCallingModel:      infra.ChatModel,
-		ToolsConfig:           compose.ToolsNodeConfig{Tools: researchTools},
+		ToolsConfig:           compose.ToolsNodeConfig{Tools: drawerTools},
 		MessageModifier:       modifyInputfunc,
 		StreamToolCallChecker: toolCallChecker,
 	})
+	if err != nil {
+		logger.Errorf(ctx, "drawer builder_error, err: %v", err)
+	}
 
 	agentLambda, err := compose.AnyLambda(agent.Generate, agent.Stream, nil, nil)
 	if err != nil {
+		logger.Errorf(ctx, "drawer builder_error, err: %v", err)
 		panic(err)
 	}
 

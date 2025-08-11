@@ -13,6 +13,7 @@ func InitResource(ctx context.Context) {
 	// 初始化日志
 	logger.MustInit(ctx)
 	infra.InitModel()
+	infra.InitMCP(&conf.Get().BaseConfig)
 
 }
 

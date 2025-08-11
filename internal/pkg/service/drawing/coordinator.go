@@ -43,6 +43,7 @@ func loadMsg(ctx context.Context, name string, opts ...any) (output []*schema.Me
 }
 
 func router(ctx context.Context, input *schema.Message, opts ...any) (output string, err error) {
+	logger.Infof(ctx, "coordinator router, input: %v", input)
 	err = compose.ProcessState[*model.State](ctx, func(_ context.Context, state *model.State) error {
 		defer func() {
 			output = state.Goto
@@ -52,11 +53,12 @@ func router(ctx context.Context, input *schema.Message, opts ...any) (output str
 			argMap := map[string]string{}
 			_ = json.Unmarshal([]byte(input.ToolCalls[0].Function.Arguments), &argMap)
 			state.Locale, _ = argMap["locale"]
-			if state.EnableBackgroundInvestigation {
-				state.Goto = enum.BackgroundInvestigator
-			} else {
-				state.Goto = enum.Planner
-			}
+			// if state.EnableBackgroundInvestigation {
+			// 	state.Goto = enum.BackgroundInvestigator
+			// } else {
+			// 	state.Goto = enum.Planner
+			// }
+			state.Goto = enum.Planner
 		}
 		return nil
 	})

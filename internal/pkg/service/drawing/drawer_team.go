@@ -9,9 +9,9 @@ import (
 	"github.com/cloudwego/eino/compose"
 )
 
-func routerResearchTeam(ctx context.Context, input string, opts ...any) (output string, err error) {
+func routerDrawerTeam(ctx context.Context, input string, opts ...any) (output string, err error) {
 	//ilog.EventInfo(ctx, "routerResearchTeam", "input", input)
-	logger.Infof(ctx, "routerResearchTeam, input: %v", input)
+	logger.Infof(ctx, "routerDrawerTeam, input: %v", input)
 	err = compose.ProcessState[*model.State](ctx, func(_ context.Context, state *model.State) error {
 		defer func() {
 			output = state.Goto
@@ -20,11 +20,12 @@ func routerResearchTeam(ctx context.Context, input string, opts ...any) (output 
 		if state.CurrentPlan == nil {
 			return nil
 		}
+		logger.Infof(ctx, "routerDrawerTeam, plan: %+#v", state.CurrentPlan)
 		for i, step := range state.CurrentPlan.Steps {
-			if step.ExecutionRes != nil {
+			if step.ExecutionRes != nil && *step.ExecutionRes != "" {
 				continue
 			}
-			logger.Infof(ctx, "research_team_step, step: %v, index: %d", step, i)
+			logger.Infof(ctx, "drawer_team_step, step: %v, index: %d", step, i)
 			switch step.StepType {
 			case enum.Drawer:
 				state.Goto = enum.Drawer
@@ -45,7 +46,7 @@ func routerResearchTeam(ctx context.Context, input string, opts ...any) (output 
 
 func NewDrawTeamNode[I, O any](ctx context.Context) *compose.Graph[I, O] {
 	cag := compose.NewGraph[I, O]()
-	_ = cag.AddLambdaNode("router", compose.InvokableLambdaWithOption(routerResearchTeam))
+	_ = cag.AddLambdaNode("router", compose.InvokableLambdaWithOption(routerDrawerTeam))
 
 	_ = cag.AddEdge(compose.START, "router")
 	_ = cag.AddEdge("router", compose.END)

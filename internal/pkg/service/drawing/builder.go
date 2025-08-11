@@ -20,6 +20,7 @@ import (
 	"context"
 	"tone/agent/internal/pkg/enum"
 	"tone/agent/internal/pkg/model"
+	"tone/agent/pkg/common/logger"
 
 	"github.com/RanFeng/ilog"
 	"github.com/cloudwego/eino/compose"
@@ -32,7 +33,8 @@ import (
 // 并将其name写入 state.Goto ，该函数读取 state.Goto 并将控制权交给对应agent
 func agentHandOff(ctx context.Context, input string) (next string, err error) {
 	defer func() {
-		ilog.EventInfo(ctx, "agent_hand_off", "input", input, "next", next)
+		// ilog.EventInfo(ctx, "agent_hand_off", "input", input, "next", next)
+		logger.Infof(ctx, "agent_hand_off, input: %v, next: %v", input, next)
 	}()
 	_ = compose.ProcessState[*model.State](ctx, func(_ context.Context, state *model.State) error {
 		next = state.Goto
@@ -63,13 +65,14 @@ func Builder[I, O, S any](ctx context.Context, genFunc compose.GenLocalState[S])
 	)
 
 	outMap := map[string]bool{
-		enum.Coordinator:            true,
-		enum.Planner:                true,
-		enum.Drawer:                 true,
-		enum.DrawerTeam:             true,
-		enum.Storyteller:            true,
-		enum.BackgroundInvestigator: true,
-		compose.END:                 true,
+		enum.Coordinator: true,
+		enum.Planner:     true,
+		enum.Drawer:      true,
+		enum.DrawerTeam:  true,
+		enum.Storyteller: true,
+		enum.Reporter:    true,
+		// enum.BackgroundInvestigator: true,
+		compose.END: true,
 	}
 
 	coordinatorGraph := NewCAgent[I, O](ctx)

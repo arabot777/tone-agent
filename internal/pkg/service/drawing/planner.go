@@ -68,14 +68,15 @@ func routerPlanner(ctx context.Context, input *schema.Message, opts ...any) (out
 			}
 			return nil
 		}
-		logger.Infof(ctx, "gen_plan_ok, current_plan: %v", state.CurrentPlan)
+		logger.Infof(ctx, "gen_plan_ok, current_plan: %+#v", state.CurrentPlan)
 		state.PlanIterations++
 		if state.CurrentPlan.HasEnoughContext {
 			state.Goto = enum.Reporter
 			return nil
 		}
 
-		state.Goto = enum.Human // TODO 改成 human_feedback
+		// state.Goto = enum.Human // TODO 改成 human_feedback
+		state.Goto = enum.DrawerTeam
 		return nil
 	})
 	return output, nil

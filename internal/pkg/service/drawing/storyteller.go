@@ -12,9 +12,7 @@ import (
 	"tone/agent/pkg/common/logger"
 
 	"github.com/RanFeng/ilog"
-	"github.com/cloudwego/eino-ext/components/tool/mcp"
 	"github.com/cloudwego/eino/components/prompt"
-	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/flow/agent/react"
 	"github.com/cloudwego/eino/schema"
@@ -35,7 +33,7 @@ func loadStorytellerMsg(ctx context.Context, name string, opts ...any) (output [
 
 		var curStep *model.Step
 		for i := range state.CurrentPlan.Steps {
-			if state.CurrentPlan.Steps[i].ExecutionRes == nil {
+			if state.CurrentPlan.Steps[i].ExecutionRes == nil || *state.CurrentPlan.Steps[i].ExecutionRes == "" {
 				curStep = &state.CurrentPlan.Steps[i]
 				break
 			}
@@ -63,20 +61,20 @@ func loadStorytellerMsg(ctx context.Context, name string, opts ...any) (output [
 }
 
 func routerStoryteller(ctx context.Context, input *schema.Message, opts ...any) (output string, err error) {
-	logger.Infof(ctx, "routerStoryteller", "input", input)
+	logger.Infof(ctx, "routerStoryteller, input: %v", input)
 	last := input
 	err = compose.ProcessState[*model.State](ctx, func(_ context.Context, state *model.State) error {
 		defer func() {
 			output = state.Goto
 		}()
 		for i, step := range state.CurrentPlan.Steps {
-			if step.ExecutionRes == nil {
+			if step.ExecutionRes == nil || *step.ExecutionRes == "" {
 				str := strings.Clone(last.Content)
 				state.CurrentPlan.Steps[i].ExecutionRes = &str
 				break
 			}
 		}
-		logger.Infof(ctx, "routerStoryteller plan: %v", state.CurrentPlan)
+		logger.Infof(ctx, "routerStoryteller, plan: %v", state.CurrentPlan)
 		state.Goto = enum.DrawerTeam
 		return nil
 	})
@@ -105,25 +103,16 @@ func modifyStorytellerfunc(ctx context.Context, input []*schema.Message) []*sche
 func NewStorytellerNode[I, O any](ctx context.Context) *compose.Graph[I, O] {
 	cag := compose.NewGraph[I, O]()
 
-	researchTools := []tool.BaseTool{}
-	for mcpName, cli := range infra.MCPServer {
-		ts, err := mcp.GetTools(ctx, &mcp.Config{Cli: cli})
-		if err != nil {
-			ilog.EventError(ctx, err, "builder_error")
-		}
-		if strings.HasPrefix(mcpName, "python") {
-			researchTools = append(researchTools, ts...)
-		}
-	}
-	logger.Infof(ctx, "storyteller tools: %v", researchTools)
-
 	agent, err := react.NewAgent(ctx, &react.AgentConfig{
 		MaxStep:               40,
 		ToolCallingModel:      infra.ChatModel,
-		ToolsConfig:           compose.ToolsNodeConfig{Tools: researchTools},
 		MessageModifier:       modifyStorytellerfunc,
 		StreamToolCallChecker: toolCallChecker,
 	})
+	if err != nil {
+		logger.Errorf(ctx, "storyteller agent error: %v", err)
+		panic(err)
+	}
 
 	agentLambda, err := compose.AnyLambda(agent.Generate, agent.Stream, nil, nil)
 	if err != nil {

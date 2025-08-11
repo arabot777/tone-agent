@@ -53,7 +53,7 @@ func setupRoutes(h *server.Hertz) {
 	// deer flow demo接口
 	api := h.Group("/api")
 	{
-		api.POST("/chat/stream", agentController.Researcher)
+		api.POST("/chat/stream", agentController.Drawing)
 	}
 
 	// TODO: 启用 Swagger UI - 需要适配 Hertz
