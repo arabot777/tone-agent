@@ -22,7 +22,7 @@ import (
 	"fmt"
 )
 
-//go:embed prompts/*.md
+//go:embed prompts/**/*.md
 var promptsFS embed.FS
 
 // GetPromptTemplate 加载并返回一个提示模板
