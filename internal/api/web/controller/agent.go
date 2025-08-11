@@ -18,6 +18,7 @@ import (
 	"tone/agent/internal/pkg/infra"
 	"tone/agent/internal/pkg/model"
 	"tone/agent/internal/pkg/service/deep"
+	"tone/agent/internal/pkg/service/drawing"
 	"tone/agent/internal/pkg/service/journal"
 	"tone/agent/pkg/common/logger"
 	"tone/agent/pkg/utils"
@@ -167,7 +168,55 @@ func (a *AgentController) Drawing(ctx context.Context, c *app.RequestContext) {
 			EnableBackgroundInvestigation: req.EnableBackgroundInvestigation,
 		}
 	}
+	// Build Graph
+	r := drawing.Builder[string, string, *model.State](ctx, genFunc)
 
+	// Run Graph
+	_, err = r.Stream(ctx, deep.Coordinator,
+		compose.WithCheckPointID(req.ThreadID), // 指定Graph的CheckPointID
+		// 中断后，获取用户的edit_plan信息
+		compose.WithStateModifier(func(ctx context.Context, path compose.NodePath, state any) error {
+			s := state.(*model.State)
+			s.InterruptFeedback = req.InterruptFeedback
+			if req.InterruptFeedback == "edit_plan" {
+				s.Messages = append(s.Messages, req.Messages...)
+			}
+			logger.Infof(ctx, "ChatStream_modf", "path", path.GetPath(), "state", state)
+			return nil
+		}),
+		// 连接LoggerCallback
+		compose.WithCallbacks(&infra.LoggerCallback{
+			ID:  req.ThreadID,
+			SSE: w,
+		}),
+	)
+
+	// 将interrupt信号传递到前端
+	if info, ok := compose.ExtractInterruptInfo(err); ok {
+		logger.Infof(ctx, "ChatStream_interrupt", "info", info)
+		data := &model.ChatResp{
+			ThreadID:     req.ThreadID,
+			ID:           "human_feedback:" + utils.RandStr(20),
+			Role:         "assistant",
+			Content:      "检查计划",
+			FinishReason: "interrupt",
+			Options: []map[string]any{
+				{
+					"text":  "编辑计划",
+					"value": "edit_plan",
+				},
+				{
+					"text":  "开始执行",
+					"value": "accepted",
+				},
+			},
+		}
+		dB, _ := json.Marshal(data)
+		w.WriteEvent("", "interrupt", dB)
+	}
+	if err != nil {
+		logger.Errorf(ctx, "ChatStream_error, err: %v", err)
+	}
 }
 
 func (a *AgentController) Researcher(ctx context.Context, c *app.RequestContext) {

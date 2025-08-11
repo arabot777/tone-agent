@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 
-	"tone/agent/internal/pkg/service/drawing"
 	"tone/agent/internal/pkg/service/einoagent"
 
 	"github.com/cloudwego/eino/callbacks"
@@ -132,53 +131,53 @@ func LogCallback(config *LogCallbackConfig) callbacks.Handler {
 	return builder.Build()
 }
 
-func (s *AgentService) Drawing(ctx context.Context, id string, msg string) (*schema.StreamReader[*schema.Message], error) {
-	// conversation := memory.GetConversation(id, true)
+// func (s *AgentService) Drawing(ctx context.Context, id string, msg string) (*schema.StreamReader[*schema.Message], error) {
+// 	// conversation := memory.GetConversation(id, true)
 
-	userMessage := &drawing.UserMessage{
-		ID:    id,
-		Query: msg,
-		// History: conversation.GetMessages(),
-	}
+// 	userMessage := &drawing.UserMessage{
+// 		ID:    id,
+// 		Query: msg,
+// 		// History: conversation.GetMessages(),
+// 	}
 
-	runner, err := drawing.BuildDrawingAgent(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build agent graph: %w", err)
-	}
+// 	runner, err := drawing.BuildDrawingAgent(ctx)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to build agent graph: %w", err)
+// 	}
 
-	sr, err := runner.Stream(ctx, userMessage, compose.WithCallbacks())
-	if err != nil {
-		return nil, fmt.Errorf("failed to stream: %w", err)
-	}
+// 	sr, err := runner.Stream(ctx, userMessage, compose.WithCallbacks())
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to stream: %w", err)
+// 	}
 
-	srs := sr.Copy(2)
+// 	srs := sr.Copy(2)
 
-	go func() {
-		// for save to memory
-		fullMsgs := make([]*schema.Message, 0)
+// 	go func() {
+// 		// for save to memory
+// 		fullMsgs := make([]*schema.Message, 0)
 
-		defer func() {
-			srs[1].Close()
-		}()
+// 		defer func() {
+// 			srs[1].Close()
+// 		}()
 
-	outer:
-		for {
-			select {
-			case <-ctx.Done():
-				fmt.Println("context done", ctx.Err())
-				return
-			default:
-				chunk, err := srs[1].Recv()
-				if err != nil {
-					if errors.Is(err, io.EOF) {
-						break outer
-					}
-				}
+// 	outer:
+// 		for {
+// 			select {
+// 			case <-ctx.Done():
+// 				fmt.Println("context done", ctx.Err())
+// 				return
+// 			default:
+// 				chunk, err := srs[1].Recv()
+// 				if err != nil {
+// 					if errors.Is(err, io.EOF) {
+// 						break outer
+// 					}
+// 				}
 
-				fullMsgs = append(fullMsgs, chunk)
-			}
-		}
-	}()
+// 				fullMsgs = append(fullMsgs, chunk)
+// 			}
+// 		}
+// 	}()
 
-	return srs[0], nil
-}
+// 	return srs[0], nil
+// }
