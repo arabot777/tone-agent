@@ -10,12 +10,12 @@ const (
 
 // Step 定义单个步骤的结构体
 type Step struct {
-	NeedWebSearch bool     `json:"need_web_search" validate:"required"`
-	NeedDrawing   bool     `json:"need_drawing" validate:"required"`
-	Title         string   `json:"title" validate:"required"`
-	Description   string   `json:"description" validate:"required"`
-	StepType      StepType `json:"step_type" validate:"required"`
-	ExecutionRes  *string  `json:"execution_res,omitempty"`
+	NeedWebSearch    bool               `json:"need_web_search" validate:"required"`
+	Title            string             `json:"title" validate:"required"`
+	Description      string             `json:"description" validate:"required"`
+	StepType         StepType           `json:"step_type" validate:"required"`
+	ExecutionRes     *string            `json:"execution_res,omitempty"`
+	StorytellerScene []StorytellerScene `json:"storyteller_scene,omitempty"`
 }
 
 // Plan 定义计划的结构体

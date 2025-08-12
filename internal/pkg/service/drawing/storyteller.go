@@ -34,8 +34,9 @@ func loadStorytellerMsg(ctx context.Context, name string, opts ...any) (output [
 
 		var curStep *model.Step
 		for i := range state.CurrentPlan.Steps {
-			if state.CurrentPlan.Steps[i].ExecutionRes == nil || *state.CurrentPlan.Steps[i].ExecutionRes == "" {
-				curStep = &state.CurrentPlan.Steps[i]
+			step := state.CurrentPlan.Steps[i]
+			if len(step.StorytellerScene) == 0 {
+				curStep = &step
 				break
 			}
 		}
@@ -44,16 +45,27 @@ func loadStorytellerMsg(ctx context.Context, name string, opts ...any) (output [
 			panic("no step found")
 		}
 
+		// 获取历史的故事
+		var storyContext strings.Builder
+		storyContext.WriteString("# Story Context\n\n")
+		for _, step := range state.CurrentPlan.Steps {
+			if step.StepType == enum.Storyteller && step.StorytellerScene != nil {
+				storyContext.WriteString(fmt.Sprintf("## %s\n\n", step.Title))
+				for _, scene := range step.StorytellerScene {
+					storyContext.WriteString(fmt.Sprintf("### %s\n\n%s\n\n", scene.Title, scene.StoryDetails))
+				}
+			}
+		}
+
 		msg := []*schema.Message{}
 		msg = append(msg,
 			schema.UserMessage(fmt.Sprintf("#Task\n\n##title\n\n %v \n\n##description\n\n %v \n\n##locale\n\n %v", curStep.Title, curStep.Description, state.Locale)),
 		)
 		variables := map[string]any{
-			"locale":              state.Locale,
-			"max_step_num":        state.MaxStepNum,
-			"max_plan_iterations": state.MaxPlanIterations,
-			"CURRENT_TIME":        time.Now().Format("2006-01-02 15:04:05"),
-			"user_input":          msg,
+			"locale":        state.Locale,
+			"CURRENT_TIME":  time.Now().Format("2006-01-02 15:04:05"),
+			"user_input":    msg,
+			"story_context": storyContext.String(),
 		}
 		output, err = promptTemp.Format(context.Background(), variables)
 		return err
@@ -62,7 +74,7 @@ func loadStorytellerMsg(ctx context.Context, name string, opts ...any) (output [
 }
 
 func routerStoryteller(ctx context.Context, input *schema.Message, opts ...any) (output string, err error) {
-	logger.Infof(ctx, "routerStoryteller, input: %v", input)
+	logger.Infof(ctx, "routerStoryteller, input: %+#v", input)
 	last := input
 	err = compose.ProcessState[*model.State](ctx, func(_ context.Context, state *model.State) error {
 		defer func() {
@@ -70,67 +82,23 @@ func routerStoryteller(ctx context.Context, input *schema.Message, opts ...any) 
 		}()
 		// Always store raw storyteller output to the first pending step
 		for i, step := range state.CurrentPlan.Steps {
-			if step.ExecutionRes == nil || *step.ExecutionRes == "" {
+			if len(step.StorytellerScene) == 0 {
 				str := strings.Clone(last.Content)
 				state.CurrentPlan.Steps[i].ExecutionRes = &str
+				var payload []model.StorytellerScene
+				if err := json.Unmarshal([]byte(last.Content), &payload); err != nil {
+					// Not a JSON payload; fall back to original flow
+					logger.Warnf(ctx, "storyteller JSON parse failed, fallback to DrawerTeam, err: %v", err)
+					return nil
+				}
+				state.CurrentPlan.Steps[i].StorytellerScene = payload
+
 				break
 			}
 		}
 
-		// Try to parse storyteller structured JSON with multi-scenes into typed schema
-		var payload model.StorytellerOutput
-
 		// Default goto
 		state.Goto = enum.DrawerTeam
-
-		if err := json.Unmarshal([]byte(last.Content), &payload); err != nil {
-			// Not a JSON payload; fall back to original flow
-			logger.Warnf(ctx, "storyteller JSON parse failed, fallback to DrawerTeam, err: %v", err)
-			logger.Infof(ctx, "routerStoryteller, plan: %v", state.CurrentPlan)
-			return nil
-		}
-
-		// If structured scenes exist, append drawer steps dynamically (one scene -> one image)
-		if len(payload.Scenes) > 0 {
-			for _, sc := range payload.Scenes {
-				descBuilder := strings.Builder{}
-				descBuilder.WriteString("# Scene\n\n")
-				if sc.Title != "" {
-					descBuilder.WriteString("## Title\n\n" + sc.Title + "\n\n")
-				}
-				if sc.Narrative != "" {
-					descBuilder.WriteString("## Narrative\n\n" + sc.Narrative + "\n\n")
-				}
-				// Visual brief may be any type; store as JSON string for robustness
-				if vb, err := json.Marshal(sc.VisualBrief); err == nil && string(vb) != "null" {
-					descBuilder.WriteString("## VisualBrief(JSON)\n\n" + string(vb) + "\n\n")
-				}
-				if sc.DrawInput != "" {
-					descBuilder.WriteString("## DrawInput\n\n" + sc.DrawInput + "\n\n")
-				}
-				if sc.Style != "" {
-					descBuilder.WriteString("## Style\n\n" + sc.Style + "\n\n")
-				}
-				if sc.SceneIndex > 0 {
-					descBuilder.WriteString(fmt.Sprintf("## SceneIndex\n\n%v\n\n", sc.SceneIndex))
-				}
-				if payload.Locale != "" {
-					descBuilder.WriteString("## Locale\n\n" + payload.Locale + "\n\n")
-				} else {
-					descBuilder.WriteString("## Locale\n\n" + state.Locale + "\n\n")
-				}
-
-				state.CurrentPlan.Steps = append(state.CurrentPlan.Steps, model.Step{
-					NeedWebSearch: false,
-					NeedDrawing:   true,
-					Title:         func() string { if sc.Title != "" { return sc.Title } ; return "Illustrate Scene" }(),
-					Description:   descBuilder.String(),
-					StepType:      enum.Drawer,
-					ExecutionRes:  nil,
-				})
-			}
-			logger.Infof(ctx, "routerStoryteller appended %d drawer steps", len(payload.Scenes))
-		}
 
 		logger.Infof(ctx, "routerStoryteller, plan: %v", state.CurrentPlan)
 		return nil

@@ -27,12 +27,26 @@ func loadReporterMsg(ctx context.Context, name string, opts ...any) (output []*s
 		)
 
 		msg := []*schema.Message{}
+		// Build a concise, structured input describing the story and scenes with image URLs
+		// Title and intro
 		msg = append(msg,
-			schema.UserMessage(fmt.Sprintf("# Research Requirements\n\n## Task\n\n %v \n\n## Description\n\n %v", state.CurrentPlan.Title, state.CurrentPlan.Thought)),
-			schema.SystemMessage("IMPORTANT: Structure your report according to the format in the prompt. Remember to include:\n\n1. Key Points - A bulleted list of the most important findings\n2. Overview - A brief introduction to the topic\n3. Detailed Analysis - Organized into logical sections\n4. Survey Note (optional) - For more comprehensive reports\n5. Key Citations - List all references at the end\n\nFor citations, DO NOT include inline citations in the text. Instead, place all citations in the 'Key Citations' section at the end using the format: `- [Source Title](URL)`. Include an empty line between each citation for better readability.\n\nPRIORITIZE USING MARKDOWN TABLES for data presentation and comparison. Use tables whenever presenting comparative data, statistics, features, or options. Structure tables with clear headers and aligned columns. Example table format:\n\n| Feature | Description | Pros | Cons |\n|---------|-------------|------|------|\n| Feature 1 | Description 1 | Pros 1 | Cons 1 |\n| Feature 2 | Description 2 | Pros 2 | Cons 2 |"),
+			schema.UserMessage(fmt.Sprintf("# Story Title\n\n%v\n\n# Story Introduction\n\n%v", state.CurrentPlan.Title, state.CurrentPlan.Thought)),
+			schema.SystemMessage("IMPORTANT: Optimize and format the story layout according to the reporter prompt. Produce polished Markdown in the specified locale. Each scene must include its image (embed by URL), a short italic caption, and concise narrative paragraphs. Do not invent content or URLs. Output raw Markdown only."),
 		)
+
+		// Aggregate scenes from storyteller output with their drawer image URLs
 		for _, step := range state.CurrentPlan.Steps {
-			msg = append(msg, schema.UserMessage(fmt.Sprintf("Below are some observations for the research task:\n\n %v", *step.ExecutionRes)))
+			if len(step.StorytellerScene) == 0 {
+				continue
+			}
+			for _, sc := range step.StorytellerScene {
+				DrawerOutput := sc.DrawerOutput // string
+				// Provide per-scene payload succinctly
+				msg = append(msg, schema.UserMessage(
+					fmt.Sprintf("Scene %d\nTitle: %s\nDetails: %s\nDrawerOutput: %s",
+						sc.SceneIndex, sc.Title, sc.StoryDetails, DrawerOutput),
+				))
+			}
 		}
 		variables := map[string]any{
 			"locale":              state.Locale,

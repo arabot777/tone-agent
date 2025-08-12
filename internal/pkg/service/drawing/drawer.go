@@ -33,16 +33,28 @@ func loadDrawerMsg(ctx context.Context, name string, opts ...any) (output []*sch
 			schema.MessagesPlaceholder("user_input", true),
 		)
 
+		// Find the next storyteller step with a pending scene (scene.DrawerOutput == "")
 		var curStep *model.Step
+		var sceneIdx int = -1
 		for i := range state.CurrentPlan.Steps {
-			if state.CurrentPlan.Steps[i].ExecutionRes == nil || *state.CurrentPlan.Steps[i].ExecutionRes == "" {
-				curStep = &state.CurrentPlan.Steps[i]
+			st := &state.CurrentPlan.Steps[i]
+			if st.StepType != enum.Storyteller || len(st.StorytellerScene) == 0 {
+				continue
+			}
+			for j := range st.StorytellerScene {
+				if st.StorytellerScene[j].DrawerOutput == "" {
+					curStep = st
+					sceneIdx = j
+					break
+				}
+			}
+			if curStep != nil {
 				break
 			}
 		}
 
-		if curStep == nil {
-			panic("no step found")
+		if curStep == nil || sceneIdx < 0 {
+			panic("no pending scene found for drawing")
 		}
 
 		// Collect finished storyteller results as Story Context
@@ -58,17 +70,36 @@ func loadDrawerMsg(ctx context.Context, name string, opts ...any) (output []*sch
 		if storyCtx.Len() > len("# Story Context\n\n") {
 			msg = append(msg, schema.UserMessage(storyCtx.String()))
 		}
-		// Current Drawing Task: rely primarily on current step's description (which should contain full scene info)
+
+		// Build Current Drawing Task from structured storyteller scenes
+		sc := curStep.StorytellerScene[sceneIdx]
+		sceneLocale := state.Locale
+		globalTitle := curStep.Title
+
+		var sb strings.Builder
+		sb.WriteString("# Current Drawing Task\n\n")
+		if globalTitle != "" {
+			sb.WriteString("## Story Title\n\n" + globalTitle + "\n\n")
+		}
+		sb.WriteString("## Scene Title\n\n" + sc.Title + "\n\n")
+		if sc.StoryDetails != "" {
+			sb.WriteString("## StoryDetails\n\n" + sc.StoryDetails + "\n\n")
+		}
+		if sc.SceneIndex > 0 {
+			sb.WriteString(fmt.Sprintf("## SceneIndex\n\n%v\n\n", sc.SceneIndex))
+		}
+		sb.WriteString("## Locale\n\n" + sceneLocale)
+
 		msg = append(msg,
-			schema.UserMessage(fmt.Sprintf("# Current Drawing Task\n\n## Title\n\n %v \n\n## Description\n\n %v \n\n## Locale\n\n %v", curStep.Title, curStep.Description, state.Locale)),
-			schema.SystemMessage("IMPORTANT: Generate exactly ONE image for the Current Drawing Task. Use the Story Context strictly as reference. If multiple scenes exist in the Story Context, illustrate ONLY the scene described in the Current Drawing Task."),
+			schema.UserMessage(sb.String()),
+			schema.SystemMessage("IMPORTANT: Generate exactly ONE image for the Current Drawing Task. Use the Story Context strictly as reference. Illustrate ONLY the current scene specified. You MUST call tools to generate the image. Output ONLY the image URL as a single plain-text line (no extra text, no JSON, no markdown)."),
 		)
 		variables := map[string]any{
-			"locale":              state.Locale,
-			"max_step_num":        state.MaxStepNum,
-			"max_plan_iterations": state.MaxPlanIterations,
-			"CURRENT_TIME":        time.Now().Format("2006-01-02 15:04:05"),
-			"user_input":          msg,
+			"locale": state.Locale,
+			// "max_step_num":        state.MaxStepNum,
+			// "max_plan_iterations": state.MaxPlanIterations,
+			"CURRENT_TIME": time.Now().Format("2006-01-02 15:04:05"),
+			"user_input":   msg,
 		}
 		output, err = promptTemp.Format(context.Background(), variables)
 		return err
@@ -102,13 +133,20 @@ func routerDrawer(ctx context.Context, input *schema.Message, opts ...any) (outp
 		defer func() {
 			output = state.Goto
 		}()
-		for i, step := range state.CurrentPlan.Steps {
-			if step.ExecutionRes == nil || *step.ExecutionRes == "" {
-				str := strings.Clone(last.Content)
-				state.CurrentPlan.Steps[i].ExecutionRes = &str
-				break
+		// Mark the current pending scene as completed by storing the drawer result
+		for i := range state.CurrentPlan.Steps {
+			st := &state.CurrentPlan.Steps[i]
+			if st.StepType != enum.Storyteller || len(st.StorytellerScene) == 0 {
+				continue
+			}
+			for j := range st.StorytellerScene {
+				if st.StorytellerScene[j].DrawerOutput == "" {
+					st.StorytellerScene[j].DrawerOutput = strings.Clone(last.Content)
+					goto DONE
+				}
 			}
 		}
+	DONE:
 		logger.Infof(ctx, "routerDrawer, plan: %v", state.CurrentPlan)
 		state.Goto = enum.DrawerTeam
 		return nil

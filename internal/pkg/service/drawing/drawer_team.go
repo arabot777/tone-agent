@@ -22,6 +22,11 @@ func routerDrawerTeam(ctx context.Context, input string, opts ...any) (output st
 		}
 		logger.Infof(ctx, "routerDrawerTeam, plan: %+#v", state.CurrentPlan)
 		for i, step := range state.CurrentPlan.Steps {
+			if gotoDrawer(step) {
+				state.Goto = enum.Drawer
+				return nil
+			}
+
 			if step.ExecutionRes != nil && *step.ExecutionRes != "" {
 				continue
 			}
@@ -42,6 +47,21 @@ func routerDrawerTeam(ctx context.Context, input string, opts ...any) (output st
 		return nil
 	})
 	return output, nil
+}
+
+func gotoDrawer(step model.Step) bool {
+	if step.StepType != enum.Storyteller {
+		return false
+	}
+	if len(step.StorytellerScene) == 0 {
+		return false
+	}
+	for _, scene := range step.StorytellerScene {
+		if scene.DrawerOutput == "" {
+			return true
+		}
+	}
+	return false
 }
 
 func NewDrawTeamNode[I, O any](ctx context.Context) *compose.Graph[I, O] {
