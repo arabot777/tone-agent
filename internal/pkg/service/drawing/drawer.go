@@ -45,10 +45,23 @@ func loadDrawerMsg(ctx context.Context, name string, opts ...any) (output []*sch
 			panic("no step found")
 		}
 
+		// Collect finished storyteller results as Story Context
+		var storyCtx strings.Builder
+		storyCtx.WriteString("# Story Context\n\n")
+		for _, step := range state.CurrentPlan.Steps {
+			if step.StepType == enum.Storyteller && step.ExecutionRes != nil && *step.ExecutionRes != "" {
+				storyCtx.WriteString(fmt.Sprintf("## %s\n\n%s\n\n", step.Title, *step.ExecutionRes))
+			}
+		}
+
 		msg := []*schema.Message{}
+		if storyCtx.Len() > len("# Story Context\n\n") {
+			msg = append(msg, schema.UserMessage(storyCtx.String()))
+		}
+		// Current Drawing Task: rely primarily on current step's description (which should contain full scene info)
 		msg = append(msg,
-			schema.UserMessage(fmt.Sprintf("#Task\n\n##title\n\n %v \n\n##description\n\n %v \n\n##locale\n\n %v", curStep.Title, curStep.Description, state.Locale)),
-			schema.SystemMessage("IMPORTANT: DO NOT include inline citations in the text. Instead, track all sources and include a References section at the end using link reference format. Include an empty line between each citation for better readability. Use this format for each reference:\n- [Source Title](URL)\n\n- [Another Source](URL)"),
+			schema.UserMessage(fmt.Sprintf("# Current Drawing Task\n\n## Title\n\n %v \n\n## Description\n\n %v \n\n## Locale\n\n %v", curStep.Title, curStep.Description, state.Locale)),
+			schema.SystemMessage("IMPORTANT: Generate exactly ONE image for the Current Drawing Task. Use the Story Context strictly as reference. If multiple scenes exist in the Story Context, illustrate ONLY the scene described in the Current Drawing Task."),
 		)
 		variables := map[string]any{
 			"locale":              state.Locale,
@@ -61,6 +74,25 @@ func loadDrawerMsg(ctx context.Context, name string, opts ...any) (output []*sch
 		return err
 	})
 	return output, err
+}
+
+func modifyInputfunc(ctx context.Context, input []*schema.Message) []*schema.Message {
+	sum := 0
+	maxLimit := 50000
+	for i := range input {
+		if input[i] == nil {
+			logger.Warnf(ctx, "modify_inputfunc_nil input=%v", input[i])
+			continue
+		}
+		l := len(input[i].Content)
+		if l > maxLimit {
+			logger.Warnf(ctx, "modify_inputfunc_clip raw_len=%d", l)
+			input[i].Content = input[i].Content[l-maxLimit:]
+		}
+		sum += len(input[i].Content)
+	}
+	logger.Infof(ctx, "modify_inputfunc sum=%d input_len=%d", sum, len(input))
+	return input
 }
 
 func routerDrawer(ctx context.Context, input *schema.Message, opts ...any) (output string, err error) {
@@ -82,25 +114,6 @@ func routerDrawer(ctx context.Context, input *schema.Message, opts ...any) (outp
 		return nil
 	})
 	return output, nil
-}
-
-func modifyInputfunc(ctx context.Context, input []*schema.Message) []*schema.Message {
-	sum := 0
-	maxLimit := 50000
-	for i := range input {
-		if input[i] == nil {
-			logger.Warnf(ctx, "modify_inputfunc_nil", "input", input[i])
-			continue
-		}
-		l := len(input[i].Content)
-		if l > maxLimit {
-			logger.Warnf(ctx, "modify_inputfunc_clip", "raw_len", l)
-			input[i].Content = input[i].Content[l-maxLimit:]
-		}
-		sum += len(input[i].Content)
-	}
-	logger.Infof(ctx, "modify_inputfunc", "sum", sum, "input_len", len(input))
-	return input
 }
 
 func toolCallChecker(_ context.Context, sr *schema.StreamReader[*schema.Message]) (bool, error) {

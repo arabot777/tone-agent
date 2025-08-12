@@ -76,6 +76,7 @@ Different types of creative steps have different requirements:
     - Drawing steps should follow story development
     - Visual elements should support and enhance the narrative
     - Each illustration should correspond to specific story content
+    - Optionally, you may plan storytelling-only when multiple scenes are required: set a plan-level flag `defer_drawing: true` (conceptually) and DO NOT generate drawer steps at planning time. Drawing steps will be materialized later from the storyteller's structured output.
 
 ## Creative Framework
 
@@ -128,11 +129,19 @@ When planning creative development, consider these key aspects:
 - If context is insufficient (default assumption):
     - Break down the creative requirements using the Creative Framework
     - Create NO MORE THAN {{ max_step_num }} focused steps that cover essential narrative and visual elements
-    - Ensure proper workflow: storytelling steps should generally precede related drawing steps
-    - For each step, carefully set the appropriate type and flags:
-        - Storytelling steps: Set `step_type: "storyteller"`, `need_drawing: false`
-        - Drawing steps: Set `step_type: "drawer"`, `need_drawing: true`
-        - Web search is generally not needed for creative content: Set `need_web_search: false`
+    - Choose ONE of the following:
+        1) Story + Draw pairing now:
+           - Ensure proper workflow: storytelling steps should generally precede related drawing steps
+           - For each step, carefully set the appropriate type and flags:
+               - Storytelling steps: Set `step_type: "storyteller"`, `need_drawing: false`
+               - Drawing steps: Set `step_type: "drawer"`, `need_drawing: true`
+               - Web search is generally not needed for creative content: Set `need_web_search: false`
+           - When creating a drawing step for a scene, include the FULL scene text from the corresponding storytelling output in the drawing step's `description` so the drawer can use it directly as reference
+           - Ensure each drawing step is mapped to exactly one storytelling scene (one-to-one pairing). Do not merge multiple scenes into one drawing step
+        2) Story-only now (defer drawing):
+           - Produce storytelling steps only; do not generate drawer steps in the plan
+           - The storyteller will return a structured multi-scene JSON (`scenes[]`) with `draw_input` per scene
+           - The system will later materialize one drawer step per scene automatically
 - Specify the exact creative content to be developed in step's `description`.
 - Prioritize rich, engaging content that creates a complete storytelling experience.
 - Use the same language as the user to generate the plan.
@@ -166,11 +175,12 @@ interface Plan {
 - Ensure each step has a clear, specific creative objective
 - Create a comprehensive creative plan that covers narrative and visual elements within {{ max_step_num }} steps
 - Prioritize BOTH narrative depth (rich storytelling) AND visual impact (engaging illustrations)
-- Never settle for minimal creative content - aim for rich, engaging storytelling experiences
 - Establish proper creative workflow:
     - Storytelling steps (`step_type: "storyteller"`, `need_drawing: false`) for narrative development
     - Drawing steps (`step_type: "drawer"`, `need_drawing: true`) for visual creation
     - Generally, story development should precede related visual work
+    - Each drawing step MUST output exactly one image for its paired scene
+    - When using the defer-drawing mode, drawer steps will be created later from the storyteller's structured scenes (one scene -> one image)
 - Web search is typically not needed for original creative content: usually set `need_web_search: false`
 - Default to developing more creative content unless the strictest sufficient context criteria are met
 - Always use the language specified by the locale = **{{ locale }}**.

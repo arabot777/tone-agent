@@ -2,6 +2,7 @@ package drawing
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -67,6 +68,7 @@ func routerStoryteller(ctx context.Context, input *schema.Message, opts ...any) 
 		defer func() {
 			output = state.Goto
 		}()
+		// Always store raw storyteller output to the first pending step
 		for i, step := range state.CurrentPlan.Steps {
 			if step.ExecutionRes == nil || *step.ExecutionRes == "" {
 				str := strings.Clone(last.Content)
@@ -74,8 +76,63 @@ func routerStoryteller(ctx context.Context, input *schema.Message, opts ...any) 
 				break
 			}
 		}
-		logger.Infof(ctx, "routerStoryteller, plan: %v", state.CurrentPlan)
+
+		// Try to parse storyteller structured JSON with multi-scenes into typed schema
+		var payload model.StorytellerOutput
+
+		// Default goto
 		state.Goto = enum.DrawerTeam
+
+		if err := json.Unmarshal([]byte(last.Content), &payload); err != nil {
+			// Not a JSON payload; fall back to original flow
+			logger.Warnf(ctx, "storyteller JSON parse failed, fallback to DrawerTeam, err: %v", err)
+			logger.Infof(ctx, "routerStoryteller, plan: %v", state.CurrentPlan)
+			return nil
+		}
+
+		// If structured scenes exist, append drawer steps dynamically (one scene -> one image)
+		if len(payload.Scenes) > 0 {
+			for _, sc := range payload.Scenes {
+				descBuilder := strings.Builder{}
+				descBuilder.WriteString("# Scene\n\n")
+				if sc.Title != "" {
+					descBuilder.WriteString("## Title\n\n" + sc.Title + "\n\n")
+				}
+				if sc.Narrative != "" {
+					descBuilder.WriteString("## Narrative\n\n" + sc.Narrative + "\n\n")
+				}
+				// Visual brief may be any type; store as JSON string for robustness
+				if vb, err := json.Marshal(sc.VisualBrief); err == nil && string(vb) != "null" {
+					descBuilder.WriteString("## VisualBrief(JSON)\n\n" + string(vb) + "\n\n")
+				}
+				if sc.DrawInput != "" {
+					descBuilder.WriteString("## DrawInput\n\n" + sc.DrawInput + "\n\n")
+				}
+				if sc.Style != "" {
+					descBuilder.WriteString("## Style\n\n" + sc.Style + "\n\n")
+				}
+				if sc.SceneIndex > 0 {
+					descBuilder.WriteString(fmt.Sprintf("## SceneIndex\n\n%v\n\n", sc.SceneIndex))
+				}
+				if payload.Locale != "" {
+					descBuilder.WriteString("## Locale\n\n" + payload.Locale + "\n\n")
+				} else {
+					descBuilder.WriteString("## Locale\n\n" + state.Locale + "\n\n")
+				}
+
+				state.CurrentPlan.Steps = append(state.CurrentPlan.Steps, model.Step{
+					NeedWebSearch: false,
+					NeedDrawing:   true,
+					Title:         func() string { if sc.Title != "" { return sc.Title } ; return "Illustrate Scene" }(),
+					Description:   descBuilder.String(),
+					StepType:      enum.Drawer,
+					ExecutionRes:  nil,
+				})
+			}
+			logger.Infof(ctx, "routerStoryteller appended %d drawer steps", len(payload.Scenes))
+		}
+
+		logger.Infof(ctx, "routerStoryteller, plan: %v", state.CurrentPlan)
 		return nil
 	})
 	return output, nil

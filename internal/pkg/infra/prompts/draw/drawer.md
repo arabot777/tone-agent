@@ -98,3 +98,10 @@ Present your artwork creation in the following structure:
 - Ensure the artwork can stand alone as compelling visual art while supporting the narrative
 - Consider how the artwork will work within the broader creative project
 - Always use the locale of **{{ locale }}** for any text output.
+
+## One-Image Constraint and Input Precedence
+
+- **One Image Only**: For each run, generate exactly ONE image.
+- **Input Precedence**: Use the content in the Current Drawing Task (the current step's `description`) as the primary source of truth for this scene.
+- **Story Context**: If provided, treat it strictly as reference material to maintain consistency, but do NOT mix elements across different scenes.
+- **Scene Isolation**: Do not merge multiple scenes into one illustration. Each image must correspond to exactly one scene.
