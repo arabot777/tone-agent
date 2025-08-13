@@ -20,6 +20,7 @@ import (
 )
 
 func loadStorytellerMsg(ctx context.Context, name string, opts ...any) (output []*schema.Message, err error) {
+	logger.Infof(ctx, "loadStorytellerMsg, name: %s", name)
 	err = compose.ProcessState[*model.State](ctx, func(_ context.Context, state *model.State) error {
 		sysPrompt, err := infra.GetDirPromptTemplate(ctx, "draw", name)
 		if err != nil {
@@ -121,7 +122,7 @@ func modifyStorytellerfunc(ctx context.Context, input []*schema.Message) []*sche
 		}
 		sum += len(input[i].Content)
 	}
-	ilog.EventInfo(ctx, "modify_inputfunc", "sum", sum, "input_len", input)
+	// ilog.EventInfo(ctx, "modify_inputfunc", "sum", sum, "input_len", input)
 	return input
 }
 
@@ -129,7 +130,7 @@ func NewStorytellerNode[I, O any](ctx context.Context) *compose.Graph[I, O] {
 	cag := compose.NewGraph[I, O]()
 
 	agent, err := react.NewAgent(ctx, &react.AgentConfig{
-		MaxStep:               100,
+		MaxStep:               1000,
 		ToolCallingModel:      infra.ChatModel,
 		MessageModifier:       modifyStorytellerfunc,
 		StreamToolCallChecker: toolCallChecker,

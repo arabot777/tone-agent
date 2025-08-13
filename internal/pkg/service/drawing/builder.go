@@ -34,7 +34,7 @@ import (
 func agentHandOff(ctx context.Context, input string) (next string, err error) {
 	defer func() {
 		// ilog.EventInfo(ctx, "agent_hand_off", "input", input, "next", next)
-		logger.Infof(ctx, "agent_hand_off, input: %v, next: %v", input, next)
+		logger.Infof(ctx, "agent_hand_off, input is: %v, next node is: %v", input, next)
 	}()
 	_ = compose.ProcessState[*model.State](ctx, func(_ context.Context, state *model.State) error {
 		next = state.Goto

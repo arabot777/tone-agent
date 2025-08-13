@@ -78,6 +78,15 @@ func (cb *LoggerCallback) pushMsg(ctx context.Context, msgID string, msg *schema
 		cb.setAgent(agentName)
 		return nil
 	})
+	// For drawer agent, suppress assistant non-tool content to avoid extra SSE chatter.
+	// Only stream tool call events and tool results (tool-role messages usually carry the URL).
+	if agentName == "drawer" && len(msg.ToolCalls) == 0 && msg.Role != schema.Tool {
+		return nil
+	}
+
+	if agentName == "drawer" || agentName == "storyteller" {
+		agentName = "reporter"
+	}
 
 	fr := ""
 	if msg.ResponseMeta != nil {

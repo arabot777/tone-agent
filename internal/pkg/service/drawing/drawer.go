@@ -142,13 +142,15 @@ func routerDrawer(ctx context.Context, input *schema.Message, opts ...any) (outp
 			for j := range st.StorytellerScene {
 				if st.StorytellerScene[j].DrawerOutput == "" {
 					st.StorytellerScene[j].DrawerOutput = strings.Clone(last.Content)
-					goto DONE
+					goto DrawerTeam
 				}
 			}
 		}
-	DONE:
-		logger.Infof(ctx, "routerDrawer, plan: %v", state.CurrentPlan)
+	DrawerTeam:
+		// Hand off routing to drawer_team so team can coordinate next steps (continue drawing or escalate to reporter)
 		state.Goto = enum.DrawerTeam
+
+		logger.Infof(ctx, "routerDrawer, handoff_to=%s, plan: %v", state.Goto, state.CurrentPlan)
 		return nil
 	})
 	return output, nil
@@ -183,10 +185,10 @@ func NewDrawerNode[I, O any](ctx context.Context) *compose.Graph[I, O] {
 		}
 		drawerTools = append(drawerTools, ts...)
 	}
-	logger.Infof(ctx, "researcher_end, research_tools: %v", len(drawerTools))
+	logger.Infof(ctx, "drawer_init, tools_loaded: %v", len(drawerTools))
 
 	agent, err := react.NewAgent(ctx, &react.AgentConfig{
-		MaxStep:               40,
+		MaxStep:               1000,
 		ToolCallingModel:      infra.ChatModel,
 		ToolsConfig:           compose.ToolsNodeConfig{Tools: drawerTools},
 		MessageModifier:       modifyInputfunc,

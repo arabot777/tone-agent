@@ -10,8 +10,7 @@ import (
 )
 
 func routerDrawerTeam(ctx context.Context, input string, opts ...any) (output string, err error) {
-	//ilog.EventInfo(ctx, "routerResearchTeam", "input", input)
-	logger.Infof(ctx, "routerDrawerTeam, input: %v", input)
+	logger.Infof(ctx, "drawer_team router select next node by input: %s", input)
 	err = compose.ProcessState[*model.State](ctx, func(_ context.Context, state *model.State) error {
 		defer func() {
 			output = state.Goto
@@ -22,6 +21,9 @@ func routerDrawerTeam(ctx context.Context, input string, opts ...any) (output st
 		}
 		logger.Infof(ctx, "routerDrawerTeam, plan: %+#v", state.CurrentPlan)
 		for i, step := range state.CurrentPlan.Steps {
+			logger.Infof(ctx, "drawer_team router select next node by input: %s, step_type: %s, scene count: %d, index: %d",
+				input, step.StepType, len(step.StorytellerScene), i)
+
 			if gotoDrawer(step) {
 				state.Goto = enum.Drawer
 				return nil
