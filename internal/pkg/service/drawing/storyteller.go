@@ -129,7 +129,7 @@ func NewStorytellerNode[I, O any](ctx context.Context) *compose.Graph[I, O] {
 	cag := compose.NewGraph[I, O]()
 
 	agent, err := react.NewAgent(ctx, &react.AgentConfig{
-		MaxStep:               40,
+		MaxStep:               100,
 		ToolCallingModel:      infra.ChatModel,
 		MessageModifier:       modifyStorytellerfunc,
 		StreamToolCallChecker: toolCallChecker,

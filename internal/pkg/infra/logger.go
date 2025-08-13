@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
 	"tone/agent/internal/pkg/model"
 	"tone/agent/pkg/common/logger"
 	"tone/agent/pkg/utils"
@@ -24,6 +25,22 @@ type LoggerCallback struct {
 	ID  string
 	SSE *sse.Writer
 	Out chan string
+	// Agent 缓存当前agent名称，避免在流式回调中上下文缺失导致识别不到
+	Agent string
+	mu    sync.RWMutex
+}
+
+// 线程安全地设置/获取 Agent
+func (cb *LoggerCallback) setAgent(a string) {
+	cb.mu.Lock()
+	cb.Agent = a
+	cb.mu.Unlock()
+}
+
+func (cb *LoggerCallback) getAgent() string {
+	cb.mu.RLock()
+	defer cb.mu.RUnlock()
+	return cb.Agent
 }
 
 func (cb *LoggerCallback) pushF(ctx context.Context, event string, data *model.ChatResp) error {
@@ -33,10 +50,17 @@ func (cb *LoggerCallback) pushF(ctx context.Context, event string, data *model.C
 		return err
 	}
 	if cb.SSE != nil {
-		err = cb.SSE.WriteEvent("", event, dataByte)
+		if err = cb.SSE.WriteEvent("", event, dataByte); err != nil {
+			logger.Errorf(ctx, "sse_write_error, event:%s, err:%v", event, err)
+		}
 	}
 	if cb.Out != nil {
-		cb.Out <- data.Content
+		// 避免阻塞：若无人消费则丢弃并告警
+		select {
+		case cb.Out <- data.Content:
+		default:
+			logger.Warnf(ctx, "logger_out_channel_blocked, drop, event:%s", event)
+		}
 	}
 	return nil
 }
@@ -46,9 +70,12 @@ func (cb *LoggerCallback) pushMsg(ctx context.Context, msgID string, msg *schema
 		return nil
 	}
 
-	agentName := ""
+	// 优先从状态机读取；读取失败则使用缓存的 cb.Agent（加锁读）
+	agentName := cb.getAgent()
 	_ = compose.ProcessState[*model.State](ctx, func(_ context.Context, state *model.State) error {
 		agentName = state.Goto
+		// 同步更新缓存，便于后续帧使用
+		cb.setAgent(agentName)
 		return nil
 	})
 
@@ -114,13 +141,21 @@ func (cb *LoggerCallback) OnStart(ctx context.Context, info *callbacks.RunInfo, 
 			cb.Out <- "\n==================\n"
 		}
 	}
+	// 在开始时尽力识别当前agent并缓存，供后续pushMsg使用
+	_ = compose.ProcessState[*model.State](ctx, func(_ context.Context, state *model.State) error {
+		cb.setAgent(state.Goto)
+		return nil
+	})
+	if cb.getAgent() == "" && info != nil {
+		// 回退使用回调信息里的节点名称
+		cb.setAgent(info.Name)
+	}
 	return ctx
 }
 
 func (cb *LoggerCallback) OnEnd(ctx context.Context, info *callbacks.RunInfo, output callbacks.CallbackOutput) context.Context {
 	//fmt.Println("=========[OnEnd]=========", info.Name, "|", info.Component, "|", info.Type)
 	//outputStr, _ := json.MarshalIndent(output, "", "  ") // nolint: byted_s_returned_err_check
-	//if len(outputStr) > 200 {
 	//	outputStr = outputStr[:200]
 	//}
 	//fmt.Println(string(outputStr))
