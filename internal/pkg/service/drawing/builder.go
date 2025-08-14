@@ -102,6 +102,7 @@ func Builder[I, O, S any](ctx context.Context, genFunc compose.GenLocalState[S])
 		compose.WithGraphName("EinoDeer"),
 		compose.WithNodeTriggerMode(compose.AnyPredecessor),
 		compose.WithCheckPointStore(model.NewDeerCheckPoint(ctx)), // 指定Graph CheckPointStore
+		compose.WithMaxRunSteps(1000),
 	)
 	if err != nil {
 		ilog.EventError(ctx, err, "compile failed")
